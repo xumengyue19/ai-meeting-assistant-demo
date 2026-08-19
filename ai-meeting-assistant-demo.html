@@ -287,8 +287,9 @@ let state = {
   lastSpeechAt: 0,
   lastAutoSpeakerAt: 0,
   aiEndpoint: (()=>{try{return localStorage.getItem('meetingAiEndpoint')||''}catch{return ''}})(),
-  aiProvider: (()=>{try{return localStorage.getItem('meetingAiProvider')||'deepseek'}catch{return 'deepseek'}})(),
-  aiModel: (()=>{try{return localStorage.getItem('meetingAiModel')||'deepseek-v4-flash'}catch{return 'deepseek-v4-flash'}})(),
+  aiProvider: (()=>{try{return localStorage.getItem('meetingAiProvider')||'asr'}catch{return 'asr'}})(),
+  aiModel: (()=>{try{return localStorage.getItem('meetingAiModel')||''}catch{return ''}})(),
+  llmEnabled: (()=>{try{return localStorage.getItem('meetingLlmEnabled')==='true'}catch{return false}})(),
   aiGlossary: (()=>{try{return localStorage.getItem('meetingAiGlossary')||''}catch{return ''}})(),
   aiAnalyzing: false,
   aiRequestId: 0,
@@ -338,6 +339,7 @@ function logChange(action) {
   const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
   state.changeLog.push({ time:t, action });
 }
+function hasLlmService() { return !!(state.llmEnabled && state.aiEndpoint && state.aiModel && state.aiProvider !== 'asr'); }
 
 /* ========== 四、初始化与场景切换 ========== */
 function initScene(sceneKey) {
@@ -558,8 +560,8 @@ function commitDoubaoUtterances(utterances=[], fallbackText='') {
   if (!finalized.length) { if(fallbackText) commitLiveTranscript(fallbackText, []); return; }
   finalized.forEach(item => {
     const sourceId = String(item.additions?.speaker_id ?? item.additions?.speaker ?? item.speaker_id ?? item.speaker ?? 'unknown');
-    if (!state.asrSpeakerMap[sourceId]) state.asrSpeakerMap[sourceId] = Object.keys(state.asrSpeakerMap).length + 1;
-    commitLiveTranscript(item.text, [], state.asrSpeakerMap[sourceId]);
+    if (sourceId === 'unknown') commitLiveTranscript(item.text, []);
+    else { if (!state.asrSpeakerMap[sourceId]) state.asrSpeakerMap[sourceId] = Object.keys(state.asrSpeakerMap).length + 1; commitLiveTranscript(item.text, [], state.asrSpeakerMap[sourceId]); }
   });
 }
 
@@ -570,11 +572,11 @@ function commitLiveTranscript(rawText,asrAlternatives=[],speakerNo=null) {
   if (speakerNo !== null) {
     state.activeSpeakerNo = speakerNo;
     state.liveSpeakerCount = Math.max(state.liveSpeakerCount, speakerNo);
-  } else if (state.lastSpeechAt && now - state.lastSpeechAt > 6500 && now - state.lastAutoSpeakerAt > 8000) {
-    state.liveSpeakerCount++;
-    state.activeSpeakerNo = state.liveSpeakerCount;
+  } else if (state.lastSpeechAt && now - state.lastSpeechAt > 2000) {
+    const speakerTotal=Math.max(2,state.liveSpeakerCount);
+    state.activeSpeakerNo = state.activeSpeakerNo % speakerTotal + 1;
     state.lastAutoSpeakerAt = now;
-    toast(`检测到新话轮，暂标记为说话人${state.activeSpeakerNo}`, 'info', 1800);
+    toast(`间隔超过 2 秒，已切换至说话人${state.activeSpeakerNo}`, 'info', 1800);
   }
   state.lastSpeechAt = now;
   const text = correctTranscriptLocally(rawText);
@@ -593,7 +595,7 @@ function commitLiveTranscript(rawText,asrAlternatives=[],speakerNo=null) {
     resolve:analysis.resolve,
   });
   $('speakerSwitchBtn').textContent = `说话人${state.activeSpeakerNo} ▾`;
-  if(state.aiEndpoint){
+  if(hasLlmService()){
     const job=requestModelEnhancement(item);
     state.aiJobs.push(job);
     job.finally(()=>{state.aiJobs=state.aiJobs.filter(x=>x!==job)});
@@ -678,37 +680,39 @@ function updateAIEnhanceBadge() {
   btn.classList.toggle('connected',!!state.aiEndpoint);
   btn.classList.toggle('ai-processing',!!state.aiAnalyzing);
   const provider=state.aiProvider==='doubao'?'豆包':'DeepSeek';
-  btn.textContent=state.aiAnalyzing?'AI 修正中':(state.aiEndpoint?`${provider} 已连接`:'✨ 本地智能');
+  btn.textContent=state.aiAnalyzing?'AI 修正中':(state.aiEndpoint?(hasLlmService()?`${provider} 已连接`:'豆包 ASR 已连接'):'✨ 本地智能');
 }
 function showAIConfigModal() {
   openModal('连接大模型', `
-    <div class="form-group"><label class="form-label">模型服务</label><select class="form-input" id="aiProviderInput" onchange="applyProviderPreset()"><option value="deepseek">DeepSeek</option><option value="doubao">豆包 / 火山方舟</option><option value="compatible">其他兼容服务</option></select></div>
+    <div class="form-group"><label class="form-label">模型服务</label><select class="form-input" id="aiProviderInput" onchange="applyProviderPreset()"><option value="asr">仅使用豆包 ASR（推荐）</option><option value="deepseek">DeepSeek</option><option value="doubao">豆包 / 火山方舟</option><option value="compatible">其他兼容服务</option></select></div>
     <div class="form-group"><label class="form-label">安全代理服务地址</label><input class="form-input" id="aiEndpointInput" placeholder="例如：https://your-worker.workers.dev"></div>
     <div class="form-group"><label class="form-label">模型名称</label><input class="form-input" id="aiModelInput" placeholder="DeepSeek 模型名或豆包推理接入点 ID"></div>
+    <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;color:var(--text-2)"><input type="checkbox" id="llmEnabledInput"> 启用文本大模型润色和会后纪要（需另行配置 LLM 密钥）</label>
     <div class="form-group"><label class="form-label">会议术语词表</label><textarea class="form-input" id="aiGlossaryInput" rows="3" placeholder="每行一个，例如：\nV2.3\nTeambition\n张晓明\nRAG 检索增强生成"></textarea><div style="font-size:11px;color:var(--text-3);margin-top:5px">建议填写参会人姓名、产品名、项目代号、英文缩写和专业术语。</div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div style="padding:9px;background:var(--success-light);border-radius:7px;color:#237804">✓ 实时 ASR 润色</div><div style="padding:9px;background:var(--success-light);border-radius:7px;color:#237804">✓ 会后结构化纪要</div></div>
     <div style="padding:10px 12px;background:var(--primary-bg);border-radius:7px;color:var(--text-2);font-size:12px;line-height:1.75">该地址同时用于豆包实时 ASR（<code>/asr-stream</code>）及可选的纪要大模型任务。所有密钥必须保存在代理服务端，不能写进公开 HTML。</div>
   `, `<button class="modal-btn" onclick="closeModal()">取消</button><button class="modal-btn primary" onclick="saveAIConfig()">保存配置</button>`);
-  setTimeout(()=>{$('aiProviderInput').value=state.aiProvider;$('aiEndpointInput').value=state.aiEndpoint;$('aiModelInput').value=state.aiModel;$('aiGlossaryInput').value=state.aiGlossary},0);
+  setTimeout(()=>{$('aiProviderInput').value=state.aiProvider;$('aiEndpointInput').value=state.aiEndpoint;$('aiModelInput').value=state.aiModel;$('aiGlossaryInput').value=state.aiGlossary;$('llmEnabledInput').checked=state.llmEnabled},0);
 }
 function applyProviderPreset() {
   const provider=$('aiProviderInput')?.value,model=$('aiModelInput');
   if(!model)return;
   if(provider==='deepseek')model.value='deepseek-v4-flash';
   if(provider==='doubao')model.value='请填写方舟推理接入点 ID';
-  if(provider==='compatible')model.value='';
+  if(provider==='compatible'||provider==='asr')model.value='';
 }
 function saveAIConfig() {
   const endpoint=$('aiEndpointInput')?.value.trim()||'';
-  const provider=$('aiProviderInput')?.value||'deepseek';
+  const provider=$('aiProviderInput')?.value||'asr';
   const model=$('aiModelInput')?.value.trim()||'';
   const glossary=$('aiGlossaryInput')?.value.trim()||'';
+  const llmEnabled=!!$('llmEnabledInput')?.checked;
   if(endpoint && !/^https?:\/\//.test(endpoint)){toast('请输入以 http:// 或 https:// 开头的服务地址','warning');return;}
   state.aiEndpoint=endpoint;
-  state.aiProvider=provider;state.aiModel=model;state.aiGlossary=glossary;
-  try{if(endpoint){localStorage.setItem('meetingAiEndpoint',endpoint);localStorage.setItem('meetingAiProvider',provider);localStorage.setItem('meetingAiModel',model);localStorage.setItem('meetingAiGlossary',glossary)}else{localStorage.removeItem('meetingAiEndpoint')}}catch{}
+  state.aiProvider=provider;state.aiModel=model;state.aiGlossary=glossary;state.llmEnabled=llmEnabled;
+  try{if(endpoint){localStorage.setItem('meetingAiEndpoint',endpoint);localStorage.setItem('meetingAiProvider',provider);localStorage.setItem('meetingAiModel',model);localStorage.setItem('meetingAiGlossary',glossary);localStorage.setItem('meetingLlmEnabled',String(llmEnabled))}else{localStorage.removeItem('meetingAiEndpoint')}}catch{}
   closeModal();updateAIEnhanceBadge();
-  toast(endpoint?'已启用实时转写润色与会后纪要生成':'已切换为本地智能分析',endpoint?'success':'info',2800);
+  toast(endpoint?(llmEnabled?'已启用 ASR 与文本大模型':'已启用豆包 ASR；纪要使用本地智能分析'):'已切换为本地智能分析',endpoint?'success':'info',2800);
 }
 function parseProviderPayload(data) {
   let value=data?.result||data;
@@ -722,7 +726,7 @@ function parseProviderPayload(data) {
   return value||{};
 }
 async function requestModelEnhancement(item) {
-  if(!state.aiEndpoint||!item)return;
+  if(!hasLlmService()||!item)return;
   const requestId=++state.aiRequestId;
   state.aiAnalyzing=true;updateAIEnhanceBadge();
   try {
@@ -780,7 +784,7 @@ function applyModelEnhancement(item,result={}) {
   $('transcriptStatus').textContent='大模型已修正最新转写，并同步更新议题与争议点';
 }
 async function requestFinalTranscriptRevision() {
-  if(!state.aiEndpoint||!state.transcripts.length)return false;
+  if(!hasLlmService()||!state.transcripts.length)return false;
   state.aiAnalyzing=true;updateAIEnhanceBadge();
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),25000);
   try {
@@ -807,7 +811,7 @@ async function requestFinalTranscriptRevision() {
   }
 }
 async function requestModelMinutesGeneration() {
-  if(!state.aiEndpoint||!state.generatedScene)return null;
+  if(!hasLlmService()||!state.generatedScene)return null;
   state.aiAnalyzing=true;updateAIEnhanceBadge();
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),25000);
   try {
@@ -892,12 +896,12 @@ async function stopRealRecording() {
   $('transcriptStatus').textContent = state.aiJobs.length ? '录音已结束，正在完成最后一轮大模型修正...' : '录音已结束，AI 正在生成结构化会议纪要...';
   if(state.recordingReadyPromise)await Promise.race([state.recordingReadyPromise,new Promise(resolve=>setTimeout(resolve,2500))]);
   if(state.aiJobs.length) await Promise.allSettled([...state.aiJobs]);
-  if(state.aiEndpoint){
+  if(hasLlmService()){
     $('transcriptStatus').textContent='DeepSeek 正在结合整场上下文终审转写...';
     await requestFinalTranscriptRevision();
   }
   buildGeneratedSceneFromRecording();
-  if(state.aiEndpoint){
+  if(hasLlmService()){
     $('transcriptStatus').textContent=`正在调用${state.aiProvider==='doubao'?'豆包':'DeepSeek'}生成结构化会议纪要...`;
     const aiMinutes=await requestModelMinutesGeneration();
     if(aiMinutes)applyModelMinutesResult(aiMinutes);
