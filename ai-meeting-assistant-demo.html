@@ -267,6 +267,9 @@ let state = {
   aiRequestId: 0,
   aiJobs: [],
   sourceActiveIndex: -1,
+  pendingAudioSeek: null,
+  recordingReadyPromise: null,
+  resolveRecordingReady: null,
   mediaRecorder: null,
   mediaStream: null,
   recognition: null,
@@ -441,6 +444,8 @@ async function startRealRecording() {
     if (state.recordedAudioUrl) URL.revokeObjectURL(state.recordedAudioUrl);
     state.recordedAudioUrl = '';
     state.sourceActiveIndex = -1;
+    state.pendingAudioSeek = null;
+    state.recordingReadyPromise = new Promise(resolve=>{state.resolveRecordingReady=resolve});
     state.realRecording = true;
     state.realRecordingSession = true;
     state.meetingStarted = true;
@@ -465,6 +470,8 @@ async function startRealRecording() {
       if (state.recordedAudioUrl) URL.revokeObjectURL(state.recordedAudioUrl);
       state.recordedAudioUrl = URL.createObjectURL(new Blob(state.audioChunks, { type:recorder.mimeType || 'audio/webm' }));
       attachRecordedAudio();
+      state.resolveRecordingReady?.(state.recordedAudioUrl);
+      state.resolveRecordingReady=null;
     };
     recorder.start(500);
 
@@ -723,9 +730,9 @@ async function requestModelMinutesGeneration() {
     const transcript=state.transcripts.map((t,index)=>({index,time:t.time,speaker:t.speakerName,text:t.text}));
     const response=await fetch(state.aiEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({
       task:'minutes_generate',stage:'after_meeting',provider:state.aiProvider,model:state.aiModel,language:'zh-CN',
-      instructions:'你是资深会议纪要专家。基于完整转写按实际讨论议程生成结构化纪要；提炼而非复制原文，区分结论与待确认事项，说明争议双方、前因后果和最终决议，提取负责人、截止时间和优先级。所有信息必须有原文依据，返回JSON。',
+      instructions:'你是资深会议纪要专家。基于完整转写按实际讨论议程生成结构化纪要；去除口语和重复表达，提炼而非复制原文，区分结论与待确认事项，说明争议双方、前因后果和最终决议，提取负责人、截止时间和优先级。每一项必须返回准确的零基 sourceIndex（第一段转写为0）和简短 sourceQuote，禁止虚构原文依据，只返回JSON。',
       meeting:{title:state.generatedScene.name,date:state.generatedScene.date,duration:state.generatedScene.duration,transcript},
-      responseSchema:{agenda:[{name:'string',summary:'string',keyPoints:['string'],sourceIndexes:['number']}],conclusions:[{text:'string',topic:'string',sourceIndex:'number'}],pendingItems:[{text:'string',topic:'string',sourceIndex:'number'}],disputes:[{topic:'string',context:'string',sides:[{speaker:'string',content:'string'}],resolution:'string',status:'open|resolved',sourceIndexes:['number']}],todos:[{desc:'string',owner:'string',deadline:'string',priority:'P0|P1|P2',topic:'string',sourceIndex:'number'}]}
+      responseSchema:{agenda:[{name:'string',summary:'string',keyPoints:[{text:'string',sourceIndex:'number',sourceQuote:'string'}],sourceIndexes:['number']}],conclusions:[{text:'string',topic:'string',sourceIndex:'number',sourceQuote:'string'}],pendingItems:[{text:'string',topic:'string',sourceIndex:'number',sourceQuote:'string'}],disputes:[{topic:'string',context:'string',sides:[{speaker:'string',content:'string'}],resolution:'string',status:'open|resolved',sourceIndexes:['number'],sourceQuote:'string'}],todos:[{desc:'string',owner:'string',deadline:'string',priority:'P0|P1|P2',topic:'string',sourceIndex:'number',sourceQuote:'string'}]}
     })});
     clearTimeout(timeout);
     if(!response.ok)throw new Error(`HTTP ${response.status}`);
@@ -744,16 +751,16 @@ function applyModelMinutesResult(payload) {
   if(!scene||!result||typeof result!=='object')return false;
   const agendas=Array.isArray(result.agenda)?result.agenda:[];
   if(agendas.length){
-    scene.agenda=agendas.map((a,i)=>({id:'ai-a'+(i+1),name:(a.name||`议程${i+1}`).slice(0,40),status:'done',summary:a.summary||'',keyPoints:Array.isArray(a.keyPoints)?a.keyPoints:[],sourceIndexes:Array.isArray(a.sourceIndexes)?a.sourceIndexes:[]}));
+    scene.agenda=agendas.map((a,i)=>{const rawPoints=Array.isArray(a.keyPoints)?a.keyPoints:[];return{id:'ai-a'+(i+1),name:(a.name||`议程${i+1}`).slice(0,40),status:'done',summary:a.summary||'',keyPoints:rawPoints.map(p=>typeof p==='string'?p:(p.text||'')).filter(Boolean),keyPointSources:rawPoints.map(p=>resolveSourceIndex(p,a.name)),sourceIndexes:Array.isArray(a.sourceIndexes)?a.sourceIndexes.filter(index=>Number.isInteger(index)&&index>=0&&index<state.transcripts.length):[]}});
     scene.agenda.forEach(a=>a.sourceIndexes.forEach(index=>{const t=state.transcripts[index];if(t){t.agenda=a.id;t.topic=a.name}}));
-    state.topics=scene.agenda.map((a,i)=>{const group=state.transcripts.filter(t=>t.agenda===a.id);return{id:'ai-min-topic-'+i,title:a.name,agendaId:a.id,speakers:[...new Set(group.map(t=>t.speakerName))],pointCount:group.length,points:(a.keyPoints.length?a.keyPoints:[a.summary]).filter(Boolean).slice(0,5),completed:true,active:false,aiGenerated:true}});
+    state.topics=scene.agenda.map((a,i)=>{const group=state.transcripts.filter(t=>t.agenda===a.id),points=(a.keyPoints.length?a.keyPoints:[a.summary]).filter(Boolean).slice(0,5);return{id:'ai-min-topic-'+i,title:a.name,agendaId:a.id,speakers:[...new Set(group.map(t=>t.speakerName))],pointCount:group.length,points,pointSources:(a.keyPointSources||[]).slice(0,points.length),completed:true,active:false,aiGenerated:true}});
   }
   const topicOf=x=>x.topic||scene.agenda[0]?.name||'会议讨论';
-  if(Array.isArray(result.conclusions)&&result.conclusions.length)scene.conclusions=result.conclusions.map(x=>({text:x.text||x.summary||'',confidence:'high',topic:topicOf(x),sourceIndex:x.sourceIndex})).filter(x=>x.text);
-  if(Array.isArray(result.pendingItems))scene.pendingItems=result.pendingItems.map(x=>({text:x.text||'',confidence:'low',topic:topicOf(x),status:'pending',sourceIndex:x.sourceIndex})).filter(x=>x.text);
-  if(Array.isArray(result.todos))scene.todos=result.todos.map(x=>({desc:x.desc||x.text||'',owner:x.owner||'待指派',deadline:x.deadline||'待确认',priority:/P0|高/.test(x.priority)?'high':/P1|中/.test(x.priority)?'mid':'low',topic:topicOf(x),status:'todo',strong:true,sourceIndex:x.sourceIndex})).filter(x=>x.desc);
+  if(Array.isArray(result.conclusions)&&result.conclusions.length)scene.conclusions=result.conclusions.map(x=>({text:x.text||x.summary||'',confidence:'high',topic:topicOf(x),sourceIndex:resolveSourceIndex(x,topicOf(x)),sourceQuote:x.sourceQuote||''})).filter(x=>x.text);
+  if(Array.isArray(result.pendingItems))scene.pendingItems=result.pendingItems.map(x=>({text:x.text||'',confidence:'low',topic:topicOf(x),status:'pending',sourceIndex:resolveSourceIndex(x,topicOf(x)),sourceQuote:x.sourceQuote||''})).filter(x=>x.text);
+  if(Array.isArray(result.todos))scene.todos=result.todos.map(x=>({desc:x.desc||x.text||'',owner:x.owner||'待指派',deadline:x.deadline||'待确认',priority:/P0|高/.test(x.priority)?'high':/P1|中/.test(x.priority)?'mid':'low',topic:topicOf(x),status:'todo',strong:true,sourceIndex:resolveSourceIndex(x,topicOf(x)),sourceQuote:x.sourceQuote||''})).filter(x=>x.desc);
   if(Array.isArray(result.disputes)){
-    const mapped=result.disputes.map((d,i)=>({id:'ai-min-dispute-'+i,topic:d.topic||'会议分歧',context:d.context||'',sides:Array.isArray(d.sides)?d.sides:[],resolution:d.resolution||'',status:d.status==='resolved'?'resolved':'open',transcriptIds:(d.sourceIndexes||[]).map(index=>state.transcripts[index]?.id).filter(Boolean)}));
+    const mapped=result.disputes.map((d,i)=>({id:'ai-min-dispute-'+i,topic:d.topic||'会议分歧',context:d.context||'',sides:Array.isArray(d.sides)?d.sides:[],resolution:d.resolution||'',status:d.status==='resolved'?'resolved':'open',sourceIndex:resolveSourceIndex({sourceIndex:d.sourceIndexes?.[0],sourceQuote:d.sourceQuote},d.topic),sourceIndexes:(d.sourceIndexes||[]).filter(index=>Number.isInteger(index)&&index>=0&&index<state.transcripts.length),transcriptIds:(d.sourceIndexes||[]).map(index=>state.transcripts[index]?.id).filter(Boolean)}));
     state.disputes=mapped.filter(d=>d.status==='open');state.resolvedDisputes=mapped.filter(d=>d.status==='resolved');
   }
   state.generatedScene=scene;
@@ -796,6 +803,7 @@ async function stopRealRecording() {
   $('realRecLabel').textContent = '录音已结束';
   $('realRecDot').style.opacity = '.35';
   $('transcriptStatus').textContent = state.aiJobs.length ? '录音已结束，正在完成最后一轮大模型修正...' : '录音已结束，AI 正在生成结构化会议纪要...';
+  if(state.recordingReadyPromise)await Promise.race([state.recordingReadyPromise,new Promise(resolve=>setTimeout(resolve,2500))]);
   if(state.aiJobs.length) await Promise.allSettled([...state.aiJobs]);
   buildGeneratedSceneFromRecording();
   if(state.aiEndpoint){
@@ -857,9 +865,9 @@ function buildGeneratedSceneFromRecording() {
   const agendaName=rec=>agenda.find(a=>a.id===rec.agenda)?.name||agenda[0].name;
   const attendees=[...new Set(records.map(x=>x.speakerName))].map((name,i)=>({id:'live'+(i+1),name,dept:'实时录音',role:'参会人'}));
   state.generatedScene={name:'实时录音会议',date:now.toLocaleDateString('zh-CN'),startTime:now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),duration:fmtTime(state.elapsedSeconds),location:'浏览器麦克风',attendees:attendees.length?attendees:[{id:'live1',name:'说话人1',dept:'实时录音',role:'参会人'}],agenda,transcripts:records,
-    conclusions:uniqueSummaries(conclusionRecords,5).map(x=>({text:x.text,confidence:'high',topic:agendaName(x.record)})),
-    pendingItems:uniqueSummaries(pendingRecords,4).map(x=>({text:x.text,confidence:'low',topic:agendaName(x.record)})),
-    todos:uniqueSummaries(todoRecords,6).map((x,i)=>({desc:x.text,owner:x.record.speakerName,deadline:(x.record.text.match(/\d{1,2}月\d{1,2}日|周[一二三四五六日]|明天|后天/)||['待确认'])[0],priority:i<2?'high':'mid',topic:agendaName(x.record),status:'todo',strong:true}))};
+    conclusions:uniqueSummaries(conclusionRecords,5).map(x=>({text:x.text,confidence:'high',topic:agendaName(x.record),sourceIndex:records.indexOf(x.record)})),
+    pendingItems:uniqueSummaries(pendingRecords,4).map(x=>({text:x.text,confidence:'low',topic:agendaName(x.record),sourceIndex:records.indexOf(x.record)})),
+    todos:uniqueSummaries(todoRecords,6).map((x,i)=>({desc:x.text,owner:x.record.speakerName,deadline:(x.record.text.match(/\d{1,2}月\d{1,2}日|周[一二三四五六日]|明天|后天/)||['待确认'])[0],priority:i<2?'high':'mid',topic:agendaName(x.record),status:'todo',strong:true,sourceIndex:records.indexOf(x.record)}))};
   state.disputes=disputeRecords.length?[{id:'live-dispute',topic:'会议中的风险与分歧',sides:uniqueSummaries(disputeRecords,3).map(x=>({speaker:x.record.speakerName,content:x.text,oppose:true})),status:'open',transcriptIds:disputeRecords.map(x=>x.id)}]:[];
   state.topics=agenda.map((a,i)=>{const group=records.filter(x=>x.agenda===a.id);return{id:'live-t'+i,title:a.name,agendaId:a.id,speakers:[...new Set(group.map(x=>x.speakerName))],pointCount:group.length,points:uniqueSummaries(group,3).map(x=>x.text),completed:true,active:false}});
 }
@@ -1111,7 +1119,7 @@ function setupSourcePane() {
 function renderSourcePane(activeIndex = -1) {
   const list = $('sourcePaneList');
   if (!list) return;
-  list.innerHTML = state.transcripts.map((t, index) => `<article class="source-record ${index===activeIndex?'active':''}" id="source-pane-${index}" onclick="showTranscriptContext(${index})" style="cursor:pointer"><div class="source-record-meta"><b>${t.speakerName}</b> · ${t.time}${t.topic?` · ${t.topic}`:''}</div><div>${t.text}</div></article>`).join('');
+  list.innerHTML = state.transcripts.map((t, index) => `<article class="source-record ${index===activeIndex?'active':''}" id="source-pane-${index}" onclick="playTranscriptSegment(${index})" style="cursor:pointer" title="点击从 ${t.time} 开始播放"><div class="source-record-meta"><b>${t.speakerName}</b> · ${t.time}${t.topic?` · ${t.topic}`:''}<button type="button" onclick="event.stopPropagation();showTranscriptContext(${index})" style="float:right;border:0;background:transparent;color:var(--text-3);cursor:pointer" title="查看上下文">上下文</button></div><div>${t.text}</div></article>`).join('');
   if (activeIndex >= 0) setTimeout(() => $('source-pane-' + activeIndex)?.scrollIntoView({behavior:'smooth', block:'center'}), 20);
 }
 
@@ -1134,6 +1142,7 @@ function attachRecordedAudio() {
   audio.onloadedmetadata=()=>{
     $('sourceDuration').textContent=formatAudioTime(audio.duration||state.elapsedSeconds);
     syncAudioWithTranscript();
+    if(state.pendingAudioSeek){const pending=state.pendingAudioSeek;state.pendingAudioSeek=null;seekAudioToTranscript(pending.index,pending.autoplay)}
   };
   audio.onplay=()=>{$('sourcePlayBtn').textContent='❚❚'};
   audio.onpause=()=>{$('sourcePlayBtn').textContent='▶'};
@@ -1150,6 +1159,7 @@ function seekSourceAudio(event) {
   const rect=bar.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
   audio.currentTime=ratio*audio.duration;
   syncAudioWithTranscript();
+  audio.play().catch(()=>toast('已完成定位，请再次点击播放按钮','warning'));
 }
 function cycleSourceRate() {
   const audio=$('recordedAudio');
@@ -1179,11 +1189,16 @@ function seekAudioToTranscript(index,autoplay=false) {
   highlightSourceRecord(index,true);
   const audio=$('recordedAudio');
   if(audio&&state.recordedAudioUrl){
+    if(audio.readyState<1){state.pendingAudioSeek={index,autoplay};audio.load();return;}
     const target=Math.min(parseTranscriptSeconds(state.transcripts[index].time),Math.max(0,(audio.duration||Infinity)-.1));
     if(Number.isFinite(target))audio.currentTime=target;
     syncAudioWithTranscript();
     if(autoplay)audio.play().catch(()=>{});
   }
+}
+function playTranscriptSegment(index) {
+  seekAudioToTranscript(index,true);
+  if(!state.recordedAudioUrl)toast('该段已有原文定位，但本次会议没有可播放的真实录音','info');
 }
 
 function renderTopicCard(t) {
@@ -1603,10 +1618,10 @@ function renderMinutes() {
           const conclusion = scene.conclusions.find(c => records.some(t => t.topic === c.topic || t.resolve === c.topic));
           return `<article class="agenda-structure-card"><h4>${a.name}</h4>
             <div class="agenda-structure-row"><b>讨论时间</b><span>${records[0]?.time || '—'} - ${records[records.length-1]?.time || '—'}</span></div>
-            <div class="agenda-structure-row"><b>核心结论</b><span>${conclusion?.text || '本段讨论未形成独立结论'} ${conclusion && hasSourceForTopic(conclusion.topic || a.name) ? `<button class="src-btn" onclick="locateByTopic('${conclusion.topic || a.name}')" title="查看原文出处" aria-label="查看原文出处"></button>` : ''}</span></div>
-            ${disputes.length ? `<div class="agenda-structure-row"><b>争议前因</b><span>${disputes.map(x=>`${x.speakerName}：${summarizeSpeech(x.dispute.content)}`).join('；')} ${hasSourceForTopic(disputes[0].dispute.topic) ? `<button class="src-btn" onclick="locateByTopic('${disputes[0].dispute.topic}')" title="查看原文出处" aria-label="查看原文出处"></button>` : ''}</span></div>` : ''}
+            <div class="agenda-structure-row"><b>核心结论</b><span>${conclusion?.text || '本段讨论未形成独立结论'} ${conclusion?sourceButton(conclusion,conclusion.topic||a.name):''}</span></div>
+            ${disputes.length ? `<div class="agenda-structure-row"><b>争议前因</b><span>${disputes.map(x=>`${x.speakerName}：${summarizeSpeech(x.dispute.content)}`).join('；')} ${sourceButton({sourceIndex:state.transcripts.indexOf(disputes[0])},disputes[0].dispute.topic)}</span></div>` : ''}
             ${disputes.length ? `<div class="agenda-structure-row"><b>分歧点</b><span>${disputes[0].dispute.topic}</span></div>` : ''}
-            ${resolution ? `<div class="agenda-structure-row"><b>最终决议</b><span>${summarizeSpeech(resolution.text)} ${hasSourceForTopic(resolution.resolve) ? `<button class="src-btn" onclick="locateByTopic('${resolution.resolve}')" title="查看原文出处" aria-label="查看原文出处"></button>` : ''}</span></div>` : ''}
+            ${resolution ? `<div class="agenda-structure-row"><b>最终决议</b><span>${summarizeSpeech(resolution.text)} ${sourceButton({sourceIndex:state.transcripts.indexOf(resolution)},resolution.resolve)}</span></div>` : ''}
           </article>`;
         }).join('')}
       </div>
@@ -1621,7 +1636,7 @@ function renderMinutes() {
         <div class="conclusion-card">
           <div class="conclusion-text">${c.text}</div>
           <span class="conclusion-confidence confidence-high">高置信</span>
-          <div class="conclusion-actions">${hasSourceForTopic(c.topic) ? `<button class="src-btn" onclick="locateByTopic('${c.topic}')" title="查看原文出处" aria-label="查看原文出处"></button>` : ''}</div>
+          <div class="conclusion-actions">${sourceButton(c,c.topic)}</div>
         </div>
       `).join('')}
     </div>
@@ -1635,7 +1650,7 @@ function renderMinutes() {
         ${scene.pendingItems.map((p, i) => `
           <div class="conclusion-card pending pending-item-card">
             <div class="pending-item-head"><div class="conclusion-text">${p.text}</div><div class="pending-state-switch"><button class="pending-state-btn confirmed ${p.status==='confirmed'?'active':''}" onclick="setPendingStatus(${i},'confirmed')">已确认</button><button class="pending-state-btn pending ${p.status!=='confirmed'?'active':''}" onclick="setPendingStatus(${i},'pending')">待确认</button></div></div>
-            <div class="pending-context"><b>讨论上下文：</b>${getPendingContext(p)} ${hasSourceForTopic(p.topic || p.text.substring(0,12)) ? `<button class="src-btn" onclick="locateByTopic('${p.topic || p.text.substring(0,12)}')" title="查看完整上下文" aria-label="查看完整上下文"></button>` : ''}</div>
+            <div class="pending-context"><b>讨论上下文：</b>${getPendingContext(p)} ${sourceButton(p,p.topic||p.text.substring(0,12),'查看并播放完整上下文')}</div>
             ${p.status!=='confirmed'?'<div style="margin-top:7px;font-size:11px;color:var(--warning)">已加入会后任务清单，等待负责人进一步确认。</div>':'<div style="margin-top:7px;font-size:11px;color:var(--success)">该事项已确认，无需继续跟进。</div>'}
           </div>
         `).join('')}
@@ -1652,7 +1667,7 @@ function renderMinutes() {
           <div style="font-weight:600;font-size:13px;margin-bottom:4px;color:var(--text-1);">${t.title}</div>
           <div style="padding:8px 10px;margin:6px 0;background:var(--primary-bg);border-radius:6px;font-size:12px;line-height:1.65;"><strong>观点汇总：</strong>${summarizeSpeech(t.points.join('；'),96)}</div>
           <ul class="topic-points" style="padding-left:4px;">
-            ${t.points.map((p,i) => `<li><strong>${i+1}.</strong> ${p} ${hasSourceForTopic(t.title) ? `<button class="src-btn" onclick="locateByTopic('${t.title}')" title="查看原文出处" aria-label="查看原文出处"></button>` : ''}</li>`).join('')}
+            ${t.points.map((p,i) => `<li><strong>${i+1}.</strong> ${p} ${sourceButton({sourceIndex:t.pointSources?.[i]},t.title)}</li>`).join('')}
           </ul>
         </div>
       `).join('')}
@@ -1674,7 +1689,7 @@ function renderMinutes() {
               </span>
             </div>
             ${d.sides.map(s => `<div style="font-size:12px;color:var(--text-2);padding:2px 0;"><strong>${s.speaker}：</strong>${s.content}</div>`).join('')}
-            ${hasSourceForTopic(d.topic) ? `<div style="margin-top:7px"><button class="src-btn" onclick="locateByTopic('${d.topic}')" title="查看争议上下文" aria-label="查看争议上下文"></button><span style="font-size:11px;color:var(--text-3);margin-left:6px">查看争议上下文</span></div>` : ''}
+            ${resolveSourceIndex(d,d.topic)>=0 ? `<div style="margin-top:7px">${sourceButton(d,d.topic,'查看并播放争议上下文')}<span style="font-size:11px;color:var(--text-3);margin-left:6px">查看并播放争议上下文</span></div>` : ''}
           </div>
         `).join('')}
       </div>
@@ -1769,7 +1784,7 @@ function renderTodoRows(todos) {
         <td><span class="priority-tag ${priorityClass}">${priorityText}</span></td>
         <td style="font-size:12px;color:var(--text-3);">${t.topic||'-'}</td>
         <td><span class="status-tag ${statusClass}">${statusText}</span></td>
-        <td>${hasSourceForTopic(t.topic) ? `<button class="src-btn" onclick="locateByTopic('${t.topic}')" title="查看原文出处" aria-label="查看原文出处"></button>` : '-'}</td>
+        <td>${sourceButton(t,t.topic)||'-'}</td>
       </tr>
     `;
   }).join('');
@@ -1779,14 +1794,33 @@ function findSourceIndex(topic) {
   const agendaId = state.generatedScene?.agenda?.find(a=>a.name===topic)?.id;
   return state.transcripts.findIndex(t => t.text.includes(topic?.substring(0,4)) || t.topic === topic || t.agenda === agendaId || t.resolve === topic || t.dispute?.topic === topic);
 }
+function resolveSourceIndex(item, topic='') {
+  const hasDirect=item?.sourceIndex!==null&&item?.sourceIndex!==undefined&&item?.sourceIndex!=='';
+  const direct=hasDirect?Number(item.sourceIndex):NaN;
+  if(Number.isInteger(direct)&&direct>=0&&direct<state.transcripts.length)return direct;
+  const list=Array.isArray(item?.sourceIndexes)?item.sourceIndexes:[];
+  const first=list.find(index=>Number.isInteger(index)&&index>=0&&index<state.transcripts.length);
+  if(Number.isInteger(first))return first;
+  const quote=String(item?.sourceQuote||'').trim();
+  if(quote){const byQuote=state.transcripts.findIndex(t=>t.text.includes(quote)||quote.includes(t.text));if(byQuote>=0)return byQuote}
+  return findSourceIndex(topic||item?.topic||'');
+}
+function sourceButton(item,topic='',title='查看并播放原文') {
+  const index=resolveSourceIndex(item,topic);
+  return index>=0?`<button class="src-btn" onclick="locateSourceIndex(${index},true)" title="${title}" aria-label="${title}"></button>`:'';
+}
 function hasSourceForTopic(topic) { return !!topic && findSourceIndex(topic) >= 0; }
+function locateSourceIndex(index,autoplay=true) {
+  if(index<0||index>=state.transcripts.length){toast('未找到对应原文片段','info');return;}
+  setupSourcePane();
+  renderSourcePane(index);
+  seekAudioToTranscript(index,autoplay);
+  toast(state.recordedAudioUrl?`已跳转到 ${state.transcripts[index].time} 并播放原文`:`已定位原文 ${state.transcripts[index].time}`,'success',1800);
+}
 function locateByTopic(topic) {
   const index = findSourceIndex(topic);
   if (index < 0) { toast('未找到对应原文片段', 'info'); return; }
-  setupSourcePane();
-  renderSourcePane(index);
-  seekAudioToTranscript(index, false);
-  toast(state.recordedAudioUrl ? `已定位原文及录音时间点：${topic}` : `已定位右侧原文：${topic}`, 'success', 1800);
+  locateSourceIndex(index,true);
 }
 
 function showTranscriptContext(index) {
@@ -1812,7 +1846,7 @@ function playTranscriptAudio(index) {
 }
 
 function getPendingContext(item) {
-  const key=item.topic||item.text.substring(0,12), index=findSourceIndex(key);
+  const key=item.topic||item.text.substring(0,12), index=resolveSourceIndex(item,key);
   if(index<0)return '未匹配到具体转写上下文。';
   const current=state.transcripts[index], previous=state.transcripts[index-1];
   const before=previous?`此前 ${previous.speakerName} 提到“${summarizeSpeech(previous.text,38)}”；`:'';
@@ -1823,7 +1857,7 @@ function syncPendingTasks(scene) {
   scene.pendingItems.forEach((item,index)=>{
     if(!item.status)item.status='pending';
     const taskIndex=scene.todos.findIndex(t=>t.sourcePendingIndex===index);
-    if(item.status==='pending'&&taskIndex<0)scene.todos.push({desc:`确认事项：${item.text}`,owner:'待指派',deadline:'待确认',priority:'mid',topic:item.topic||'待确认事项',status:'todo',strong:true,sourcePendingIndex:index});
+    if(item.status==='pending'&&taskIndex<0)scene.todos.push({desc:`确认事项：${item.text}`,owner:'待指派',deadline:'待确认',priority:'mid',topic:item.topic||'待确认事项',status:'todo',strong:true,sourcePendingIndex:index,sourceIndex:item.sourceIndex,sourceQuote:item.sourceQuote});
     if(item.status==='confirmed'&&taskIndex>=0)scene.todos.splice(taskIndex,1);
   });
 }
