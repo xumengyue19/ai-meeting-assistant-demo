@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 实时会议助手 Demo</title>
+<style>
+:root{--primary:#1677ff;--primary-light:#eaf3ff;--primary-bg:#f3f8ff;--success:#52c41a;--success-light:#f6ffed;--warning:#faad14;--warning-light:#fff7e6;--danger:#f5222d;--danger-light:#fff2f0;--text-1:#1f1f1f;--text-2:#595959;--text-3:#8c8c8c;--text-4:#bfbfbf;--border:#d9d9d9;--border-light:#f0f0f0;--bg-page:#f0f2f5;--radius-md:9px;--shadow-sm:0 1px 4px rgba(0,0,0,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text-1);background:var(--bg-page);font-size:14px}button,input,textarea,select{font:inherit}button{cursor:pointer}
+#landing{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef5ff,#f8f5ff)}.landing-card{width:min(720px,92vw);padding:42px;background:#fff;border-radius:20px;box-shadow:0 24px 70px rgba(30,60,100,.14)}.landing-card h1{font-size:32px;margin:0 0 10px}.landing-card p{color:var(--text-2);line-height:1.7}.scene-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}.scene-btn{padding:16px;border:1px solid var(--border);background:#fff;border-radius:10px;text-align:left}.scene-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}.start-btn{width:100%;padding:13px;border:0;border-radius:9px;background:var(--primary);color:#fff;font-weight:700}
+#app{display:none;height:100vh;overflow:hidden}#app.active{display:flex;flex-direction:column}.top-nav{height:58px;flex:none;background:#172033;color:#fff;display:flex;align-items:center;padding:0 20px;gap:18px}.nav-logo{display:flex;align-items:center;gap:9px;font-weight:700}.nav-logo-dot{width:30px;height:30px;border-radius:9px;background:var(--primary);display:grid;place-items:center;font-size:12px}.nav-scene-switch{display:flex;gap:5px}.nav-scene-btn,.nav-btn,.demo-mode-btn{border:0;border-radius:6px;padding:7px 10px;background:transparent;color:#c7cfdf}.nav-scene-btn.active,.demo-mode-btn.active{background:#fff;color:var(--primary)}.nav-demo-controls{margin-left:auto;display:flex;align-items:center;gap:8px}.demo-mode-switch{display:flex;background:#29344a;border-radius:7px;padding:2px}
+.view-tabs{height:48px;flex:none;background:#fff;border-bottom:1px solid var(--border);display:flex;padding-left:20px}.view-tab{border:0;background:transparent;padding:0 22px;color:var(--text-2);font-weight:650;border-bottom:3px solid transparent}.view-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.main-content{flex:1;min-height:0;padding:14px}.view-panel{height:100%;display:none}.view-panel.active{display:flex}.meeting-view{gap:14px}.side-panel{width:33%;min-width:300px;background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;overflow:hidden}.side-header{height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px}.side-tabs{display:flex;gap:6px}.side-tab{border:0;background:transparent;padding:8px 10px;color:var(--text-2);border-radius:6px}.side-tab.active{background:var(--primary-light);color:var(--primary)}.side-add-btn{margin-left:auto;width:30px;height:30px;border:0;border-radius:50%;background:var(--primary);color:#fff}.side-body{flex:1;overflow:auto;padding:12px}.transcript-panel{flex:1;background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;overflow:hidden}.transcript-header{height:54px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;padding:0 16px}.recording-indicator{display:flex;align-items:center;gap:7px;color:var(--danger);font-size:12px}.rec-dot{width:9px;height:9px;border-radius:50%;background:var(--danger)}.timer{font-family:ui-monospace,monospace;font-weight:700}.speaker-pending-bubble{margin-left:auto;background:var(--warning-light);color:#ad6800;padding:6px 10px;border-radius:14px}.transcript-body{flex:1;overflow:auto;padding:16px}.transcript-item{padding:10px 8px;border-bottom:1px solid var(--border-light)}.transcript-meta{display:flex;gap:10px;align-items:center;margin-bottom:4px}.transcript-time{font-size:11px;color:var(--text-3)}.transcript-speaker{font-weight:700;color:var(--primary)}.transcript-speaker.unknown{color:var(--warning)}.dept{font-weight:400;font-size:10px;margin-left:5px;color:var(--text-3)}.transcript-content{line-height:1.7;color:var(--text-2)}.transcript-content.dispute-mark{background:var(--danger-light);border-left:3px solid var(--danger);padding:7px}.highlight{background:#fff1b8!important}.typing-cursor{display:inline-block;width:2px;height:1em;background:var(--primary);animation:blink 1s infinite}.transcript-footer{min-height:62px;border-top:1px solid var(--border);padding:9px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.status-text{color:var(--text-3);font-size:12px;flex:1}.footer-btn,.modal-btn{padding:7px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text-2)}.footer-btn.primary,.modal-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}.footer-btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.real-recording-module{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;background:#f7f9fc;border:1px solid var(--border)}.record-main-btn{height:36px;padding:0 14px;border:0;border-radius:18px;color:#fff;font-weight:700;background:var(--danger)}.record-main-btn.recording{animation:recordPulse 1.4s infinite}.speaker-switch-btn{height:34px;padding:0 12px;border:1px solid #b7d4ff;border-radius:17px;background:#eef6ff;color:var(--primary)}.mic-level{display:flex;align-items:center;gap:2px;width:34px;height:22px}.mic-level i{width:3px;height:5px;border-radius:3px;background:var(--danger)}.live-interim{padding:12px;margin:8px 0;border-radius:8px;background:var(--warning-light);border:1px dashed #ffd591}.live-interim:after{content:"｜";animation:blink 1s infinite}
+.topic-group-label{font-size:12px;color:var(--text-3);margin:8px 0}.topic-card,.dispute-card{border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:9px}.topic-card.active{border-color:var(--primary);background:var(--primary-light)}.topic-card-header,.dispute-header{display:flex;align-items:center;gap:7px}.topic-title{font-weight:700;flex:1}.topic-actions{display:flex}.topic-action-btn{border:0;background:transparent;color:var(--text-3)}.topic-meta{font-size:11px;color:var(--text-3);display:flex;gap:12px;margin-top:7px}.topic-points{margin:8px 0 0;padding-left:18px;color:var(--text-2)}.topic-points li{margin:4px 0}.empty-state{text-align:center;color:var(--text-3);padding:36px}.empty-state-icon{font-size:32px}
+.minutes-view{flex-direction:column}.minutes-container{position:relative;flex:1;background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;overflow:hidden}.minutes-header{height:72px;flex:none;padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;background:var(--primary-bg)}.minutes-title{font-size:18px;font-weight:700;flex:1}.minutes-meta{display:flex;gap:15px;color:var(--text-2);font-size:12px}.minutes-body{flex:1;overflow-y:auto;padding:22px 32px 30px 220px}.minutes-section{margin-bottom:26px;scroll-margin-top:18px}.minutes-section-title{font-size:15px;font-weight:700;margin-bottom:11px;padding-bottom:7px;border-bottom:2px solid var(--primary);display:inline-block}.section-num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:5px;background:var(--primary);color:#fff;font-size:12px;margin-right:7px}.minutes-anchor{position:absolute;top:72px;left:0;bottom:0;width:188px;z-index:5;display:flex;flex-direction:column;gap:4px;overflow:auto;padding:16px 12px;background:#fafbfc;border-right:1px solid var(--border)}.minutes-anchor:before{content:"会议纪要";padding:0 10px 8px;color:var(--text-3);font-size:12px;font-weight:700}.minutes-anchor button{border:0;border-left:3px solid transparent;background:transparent;border-radius:6px;padding:9px;text-align:left;color:var(--text-2)}.minutes-anchor button.active,.minutes-anchor button:hover{border-left-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.minutes-container.has-source-pane .minutes-header,.minutes-container.has-source-pane .minutes-body{padding-right:calc(42% + 24px)}.minutes-source-pane{position:absolute;z-index:6;top:0;right:0;bottom:0;width:42%;min-width:360px;background:#fff;border-left:12px solid #e9ebef;display:flex;flex-direction:column}.source-pane-header{padding:15px 20px;min-height:72px;border-bottom:1px solid var(--border);font-size:18px;font-weight:700}.source-pane-subtitle{display:block;margin-top:3px;font-size:11px;font-weight:400;color:var(--text-3)}.source-pane-list{flex:1;overflow:auto;padding:16px}.source-record{padding:11px 13px;margin-bottom:10px;border:1px solid transparent;border-radius:7px;line-height:1.7}.source-record.active{background:#e8edff;border-color:#c7d2fe}.source-record-meta{font-size:11px;color:var(--text-3);margin-bottom:3px}.source-record-meta b{color:var(--primary)}.source-player{border-top:1px solid var(--border);padding:11px 18px}.source-progress{height:5px;background:#e5e7eb;border-radius:4px;overflow:hidden}.source-progress i{display:block;width:36%;height:100%;background:var(--text-2)}.source-controls{display:flex;align-items:center;justify-content:space-between;padding-top:10px}.source-play{width:34px;height:34px;border:0;border-radius:50%;background:var(--text-1);color:#fff}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;background:var(--bg-page);padding:14px;border-radius:8px}.info-label{font-size:11px;color:var(--text-3)}.info-value{font-weight:600}.agenda-overview{display:grid;gap:7px}.agenda-row{display:flex;gap:10px;align-items:center;padding:9px 12px;border:1px solid var(--border);border-radius:7px}.agenda-row.done{background:var(--success-light)}.agenda-status{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--success);color:#fff}.agenda-name{flex:1}.agenda-time{font-size:11px;color:var(--text-3)}.agenda-structure{display:grid;gap:9px}.agenda-structure-card,.conclusion-card{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:9px}.agenda-structure-card h4{margin:0 0 8px;color:var(--primary)}.agenda-structure-row{display:grid;grid-template-columns:76px 1fr;gap:8px;margin-top:5px;line-height:1.65}.agenda-structure-row b{color:var(--text-3)}.conclusion-card{display:flex;align-items:flex-start;gap:8px}.conclusion-text{flex:1;line-height:1.65}.conclusion-confidence,.priority-tag,.status-tag{font-size:10px;padding:2px 7px;border-radius:10px}.confidence-high{background:var(--success);color:#fff}.confidence-low{background:var(--warning);color:#fff}.src-btn{width:26px;height:26px;padding:0;border:0;border-radius:50%;font-size:0;background:#eee;color:#aaa;display:inline-grid;place-items:center;vertical-align:middle}.src-btn:before{content:"❞";font-size:14px;font-weight:700}.src-btn:hover{background:#ddd;color:#777}.approve-btn{border:0;border-radius:5px;background:var(--success);color:#fff;padding:4px 8px}.todo-table{width:100%;border-collapse:collapse;font-size:12px}.todo-table th,.todo-table td{padding:9px;border-bottom:1px solid var(--border-light);text-align:left}.todo-table th{background:var(--bg-page)}.priority-high{background:var(--danger);color:#fff}.priority-mid{background:var(--warning);color:#fff}.priority-low{background:#bfbfbf;color:#fff}.status-todo{background:#fff7e6;color:#ad6800}.status-doing{background:#e6f4ff;color:#1677ff}.status-done{background:#f6ffed;color:#389e0d}.status-overdue{background:#fff1f0;color:#cf1322}.task-missing{color:var(--warning)}.dispute-summary-item{border-left:3px solid var(--danger);background:var(--danger-light);padding:10px;margin-bottom:8px}.dispute-summary-item.resolved{border-color:var(--success);background:var(--success-light)}.ai-disclaimer{display:flex;gap:10px;padding:12px;background:#f7f9fc;border-radius:8px;color:var(--text-3);font-size:12px}.minutes-footer{height:58px;flex:none;border-top:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:8px}.spacer{flex:1}.permission-toggle{display:flex;align-items:center;gap:8px}.switch{width:34px;height:18px;border-radius:10px;background:#ccc}.switch.on{background:var(--primary)}
+.generating-overlay{position:absolute;inset:0;z-index:20;background:rgba(255,255,255,.93);display:none;align-items:center;justify-content:center;flex-direction:column}.generating-overlay.active{display:flex}.gen-spinner{width:44px;height:44px;border:4px solid #dbeafe;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}.gen-progress{width:280px;height:7px;background:#e5e7eb;border-radius:5px;overflow:hidden;margin-top:14px}.gen-progress-bar{height:100%;background:var(--primary);width:0}.gen-text{margin-top:12px}
+.modal-mask{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center}.modal-mask.active{display:flex}.modal{width:min(620px,92vw);max-height:84vh;background:#fff;border-radius:12px;box-shadow:0 25px 70px rgba(0,0,0,.25);display:flex;flex-direction:column}.modal-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex}.modal-title{font-weight:700;flex:1}.modal-close{border:0;background:transparent;font-size:20px}.modal-body{padding:18px;overflow:auto}.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}.form-group{margin-bottom:14px}.form-label{display:block;margin-bottom:6px;font-weight:600}.form-input{width:100%;padding:9px;border:1px solid var(--border);border-radius:6px}.radio-group{display:flex;gap:14px}.sync-platform-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.toast-container{position:fixed;right:18px;top:72px;z-index:200;display:grid;gap:8px}.toast{padding:10px 14px;border-radius:8px;background:#1f1f1f;color:#fff;box-shadow:var(--shadow-sm)}.value-tip{position:absolute;z-index:30;max-width:300px;background:#172033;color:#fff;padding:12px;border-radius:8px}.value-tip-close{float:right}.auto-progress{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:50;background:#fff;padding:10px 16px;border-radius:20px;box-shadow:var(--shadow-sm)}
+@keyframes blink{50%{opacity:0}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes recordPulse{50%{box-shadow:0 0 0 7px rgba(245,34,45,.1)}}
+.live-dispute-card{border:1px solid #ffccc7;border-radius:10px;background:#fff;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 9px rgba(245,34,45,.06)}.live-dispute-card.resolved{border-color:#b7eb8f;box-shadow:none}.live-dispute-top{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff2f0;border-bottom:1px solid #ffccc7}.resolved .live-dispute-top{background:#f6ffed;border-bottom-color:#d9f7be}.dispute-live-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);animation:recordPulse 1.4s infinite}.resolved .dispute-live-dot{background:var(--success);animation:none}.live-dispute-state{font-size:11px;font-weight:700;color:var(--danger)}.resolved .live-dispute-state{color:var(--success)}.live-dispute-time{margin-left:auto;font-size:11px;color:var(--text-3)}.live-dispute-main{padding:12px}.live-dispute-title{font-size:14px;font-weight:750;margin-bottom:6px}.live-dispute-ai{font-size:11px;line-height:1.55;color:var(--text-3);padding:7px 9px;background:#fafafa;border-radius:6px;margin-bottom:10px}.stance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.stance-card{padding:9px;border-radius:7px;background:#f0f7ff;border-left:3px solid var(--primary);font-size:11px;line-height:1.55}.stance-card:only-child{grid-column:1/-1}.stance-card:nth-child(even){background:#fff7e6;border-left-color:var(--warning)}.stance-label{display:block;font-weight:700;color:var(--primary);margin-bottom:3px}.stance-card:nth-child(even) .stance-label{color:#ad6800}.live-dispute-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px;color:var(--text-3);font-size:10px}.live-dispute-resolution{margin-top:9px;padding:9px;background:#f6ffed;border-radius:7px;font-size:11px;line-height:1.6;color:#237804}.live-dispute-actions{display:flex;align-items:center;gap:7px;padding:9px 12px;border-top:1px solid var(--border-light)}.dispute-action-link{border:0;background:transparent;color:var(--text-3);font-size:11px;padding:5px}.dispute-action-primary{margin-left:auto;border:0;border-radius:6px;padding:7px 11px;background:var(--danger);color:#fff;font-size:11px;font-weight:700}.resolution-options{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.resolution-option{padding:9px;border:1px solid var(--border);border-radius:7px}.resolution-option:has(input:checked){border-color:var(--primary);background:var(--primary-light)}.pending-item-card{display:block}.pending-item-head{display:flex;gap:8px;align-items:flex-start}.pending-context{margin:9px 0 0;padding:8px 10px;background:#fafafa;border-left:3px solid #d9d9d9;border-radius:5px;font-size:11px;line-height:1.65;color:var(--text-2)}.pending-context b{color:var(--text-3)}.pending-state-switch{display:flex;gap:4px;margin-left:auto}.pending-state-btn{padding:5px 9px;border:1px solid var(--border);background:#fff;color:var(--text-3);border-radius:14px;font-size:10px}.pending-state-btn.active.confirmed{border-color:var(--success);background:var(--success-light);color:#237804}.pending-state-btn.active.pending{border-color:var(--warning);background:var(--warning-light);color:#ad6800}
+@media(max-width:1100px){.minutes-source-pane{display:none}.minutes-container.has-source-pane .minutes-header,.minutes-container.has-source-pane .minutes-body{padding-right:24px}.meeting-view{flex-direction:column}.side-panel{width:100%;height:36%}.stance-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<section id="landing">
+  <div class="landing-card"><h1>AI 实时会议助手</h1><p>真实录音、实时转写、议题与争议识别，会后自动生成结构化纪要和执行任务。</p>
+    <div class="scene-grid" id="landingSceneBtns">
+      <button class="scene-btn active" data-scene="weekly"><b>部门常规周会</b><br><small>进度、需求与任务</small></button>
+      <button class="scene-btn" data-scene="review"><b>跨部门项目评审</b><br><small>技术方案与决策</small></button>
+      <button class="scene-btn" data-scene="client"><b>客户需求对接</b><br><small>需求、条款与承诺</small></button>
+    </div><button class="start-btn" onclick="startDemo()">进入交互 Demo</button>
+  </div>
+</section>
+<div id="app">
+  <header class="top-nav"><div class="nav-logo"><div class="nav-logo-dot">AI</div><span>会议助手</span></div>
+    <div class="nav-scene-switch" id="navSceneSwitch"><button class="nav-scene-btn active" data-scene="weekly">部门周会</button><button class="nav-scene-btn" data-scene="review">项目评审</button><button class="nav-scene-btn" data-scene="client">客户对接</button></div>
+    <div class="nav-demo-controls"><div class="demo-mode-switch"><button class="demo-mode-btn active" data-mode="manual" onclick="setDemoMode('manual')">分步演示</button><button class="demo-mode-btn" data-mode="auto" onclick="setDemoMode('auto')">自动播放</button></div><button class="nav-btn" onclick="resetDemo()">重置</button><button class="nav-btn" onclick="backToLanding()">返回首页</button></div>
+  </header>
+  <div class="view-tabs"><button class="view-tab active" data-view="meeting" onclick="switchView('meeting')">会中实时辅助</button><button class="view-tab" data-view="minutes" onclick="switchView('minutes')">会后智能纪要</button></div>
+  <main class="main-content">
+    <section class="view-panel meeting-view active" id="view-meeting">
+      <aside class="side-panel"><div class="side-header"><div class="side-tabs"><button class="side-tab active" data-sidetab="topics" onclick="switchSideTab('topics')">议题 <span id="topicCount">0</span></button><button class="side-tab" data-sidetab="disputes" onclick="switchSideTab('disputes')">争议 <span id="disputeCount">0</span></button></div><button class="side-add-btn" onclick="showAddTopicModal()">+</button></div><div class="side-body" id="sideBody"></div></aside>
+      <section class="transcript-panel"><div class="transcript-header"><div class="recording-indicator"><div class="rec-dot" id="realRecDot" style="opacity:.35"></div><span id="realRecLabel">等待开始录音</span></div><div class="timer" id="meetingTimer">00:00</div><div class="speaker-pending-bubble" id="pendingBubble" style="display:none" onclick="showSpeakerFixModal()">⚠ 待确认发言人 <span id="pendingCount">0</span></div></div><div class="transcript-body" id="transcriptBody"></div>
+        <div class="transcript-footer"><span class="status-text" id="transcriptStatus">点击“开始录音”，允许浏览器访问麦克风</span><div class="real-recording-module"><div class="mic-level" id="micLevel"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="record-main-btn" id="recordBtn" onclick="startRealRecording()">● 开始录音</button><button class="speaker-switch-btn" id="speakerSwitchBtn" onclick="switchLiveSpeaker()" disabled>说话人1 ⇄</button><button class="footer-btn danger" id="stopRecordBtn" onclick="stopRealRecording()" disabled>■ 结束录音并生成纪要</button></div><button class="footer-btn" onclick="nextTranscript()" id="nextBtn">模拟发言</button><button class="footer-btn danger" id="endDemoBtn" onclick="endSimulatedMeeting()">结束模拟会议</button></div>
+      </section>
+    </section>
+    <section class="view-panel minutes-view" id="view-minutes"><div class="minutes-container"><div class="generating-overlay" id="genOverlay"><div class="gen-spinner"></div><div class="gen-text" id="genText">AI 正在生成会议纪要...</div><div class="gen-progress"><div class="gen-progress-bar" id="genProgressBar"></div></div></div><div class="minutes-header"><div class="minutes-title" id="minutesTitle">会议纪要</div><div class="minutes-meta"><span>📅 <span id="minutesDate">—</span></span><span>⏱ <span id="minutesDuration">—</span></span><span>👥 <span id="minutesAttendees">—</span></span></div></div><div class="minutes-body" id="minutesBody"><div class="empty-state"><div class="empty-state-icon">📝</div><div>会议结束后自动生成结构化纪要</div></div></div><div class="minutes-footer" id="minutesFooter" style="display:none"><div class="permission-toggle"><span>仅主持人可编辑</span><div class="switch on" id="permSwitch" onclick="togglePermission()"></div></div><div class="spacer"></div><button class="footer-btn" onclick="showShareModal()">分享</button><button class="footer-btn" onclick="showExportModal()">导出</button><button class="footer-btn primary" onclick="showSyncModal()">同步协作工具</button></div></div></section>
+  </main>
+</div>
+<div class="modal-mask" id="modalMask"><div class="modal"><div class="modal-header"><div class="modal-title" id="modalTitle"></div><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body" id="modalBody"></div><div class="modal-footer" id="modalFooter"></div></div></div>
+<div class="toast-container" id="toastContainer"></div><div class="auto-progress" id="autoProgress" style="display:none"></div>
+<script>
+
+/* ================================================================
+   AI 实时会议助手 Demo - 核心逻辑
+   模块：数据层 / 转写引擎 / 议题管理 / 争议管理 / 纪要生成 / 待办闭环 / 演示控制
+   ================================================================ */
+
+/* ========== 一、场景模拟数据 ========== */
+const SCENES = {
+  weekly: {
+    name: '产品部常规周会',
+    date: '2026-08-19',
+    startTime: '10:00',
+    duration: '45分钟',
+    location: '3F-会议室A',
+    attendees: [
+      { id:'s1', name:'张明', dept:'产品部', role:'主持人' },
+      { id:'s2', name:'李婷', dept:'产品部', role:'产品经理' },
+      { id:'s3', name:'王强', dept:'研发部', role:'研发负责人' },
+      { id:'s4', name:'陈雪', dept:'设计部', role:'设计师' },
+      { id:'s5', name:'赵芳', dept:'行政部', role:'行政专员' },
+    ],
+    agenda: [
+      { id:'a1', name:'上周工作回顾与进度同步', status:'done' },
+      { id:'a2', name:'V2.3 版本需求评审', status:'done' },
+      { id:'a3', name:'线上问题复盘与改进措施', status:'done' },
+      { id:'a4', name:'下周工作计划安排', status:'done' },
+    ],
+    transcripts: [
+      { speaker:'s1', time:'00:00', text:'大家好，我们开始今天的周会。首先同步一下上周的工作进展，各位按顺序汇报一下。', agenda:'a1' },
+      { speaker:'s2', time:'00:15', text:'上周我主要推进了 V2.3 版本的需求梳理，核心功能模块已经完成 PRD 初稿，预计本周三可以组织评审。', agenda:'a1' },
+      { speaker:'s3', time:'00:38', text:'研发这边，上周完成了用户中心模块的重构，接口联调进度大概 70%。不过有个问题，第三方登录 SDK 升级后兼容性不太好，我们还在排查。', agenda:'a1', dispute:{topic:'第三方SDK兼容性', side:'研发部立场', content:'SDK升级导致兼容性问题，建议回退版本'} },
+      { speaker:'s4', time:'01:05', text:'设计稿方面，V2.3 的主流程界面已经出了高保真，但是详情页的交互方案我和产品还没完全对齐，需要再碰一下。', agenda:'a1' },
+      { speaker:'s1', time:'01:28', text:'好的，那我们进入第二个议题，V2.3 版本需求评审。李婷你先介绍一下核心需求。', agenda:'a2' },
+      { speaker:'s2', time:'01:40', text:'V2.3 我们重点做三个功能：第一是智能推荐算法升级，第二是消息中心重构，第三是新增数据看板模块。其中数据看板是这次的重点，需要支持自定义指标拖拽和多维度筛选。', agenda:'a2', topic:'V2.3核心功能规划' },
+      { speaker:'s3', time:'02:10', text:'数据看板这个需求我有个顾虑，自定义拖拽的复杂度很高，前端渲染性能可能是个瓶颈。我的建议是 V2.3 先做固定模板的看板，自定义拖拽放到 V2.4。', agenda:'a2', dispute:{topic:'数据看板实现范围', side:'研发部立场', content:'建议V2.3先做固定模板，自定义拖拽延后'} },
+      { speaker:'s2', time:'02:35', text:'我理解研发的顾虑，但是数据看板如果只做固定模板，业务方的核心诉求就没满足。我们能不能做一个折中方案，支持有限的几个布局模板切换？', agenda:'a2', dispute:{topic:'数据看板实现范围', side:'产品部立场', content:'建议支持有限布局模板切换，满足核心诉求'} },
+      { speaker:'s1', time:'03:00', text:'这个分歧我们先记下来，稍后讨论。继续，陈雪你说说设计侧的准备情况。', agenda:'a2' },
+      { speaker:'s4', time:'03:12', text:'数据看板的设计我已经出了两版方案，一版是卡片式布局，一版是仪表盘风格。我个人倾向卡片式，信息层级更清晰，用户学习成本低。', agenda:'a2', topic:'数据看板设计方案' },
+      { speaker:'unknown', time:'03:40', text:'我补充一下，行政这边下周有个团建活动需要大家确认时间，我稍后把问卷发到群里。', agenda:'a4', unknown:true },
+      { speaker:'s3', time:'03:58', text:'刚才说的第三方 SDK 问题，我们测试了一下，回退到上一个稳定版本是可行的，但会失去一些新特性。我的建议是先回退保证上线，后续再跟进升级。', agenda:'a1', dispute:{topic:'第三方SDK兼容性', side:'研发部立场', content:'建议先回退稳定版本保证上线'} },
+      { speaker:'s1', time:'04:25', text:'SDK 的问题我同意王强的方案，先回退保证 V2.3 按时上线。数据看板的方案，我觉得李婷的折中方案可以考虑，有限模板切换，研发评估一下工作量。', agenda:'a2', resolve:'数据看板实现范围' },
+      { speaker:'s2', time:'04:50', text:'好的，那我整理一下待办：第一，王强负责 SDK 回退方案，本周五前完成；第二，研发评估有限模板看板的工作量，周三前给出结论；第三，我和陈雪对齐详情页交互，明天下午之前。', agenda:'a2', todo:true },
+      { speaker:'s5', time:'05:15', text:'我补充一个行政事项，下个月的部门预算需要各模块负责人在本周五前提交给我，麻烦大家注意时间。', agenda:'a4', todo:true },
+      { speaker:'s1', time:'05:35', text:'好的，那今天的会议就到这里，AI 会自动生成纪要和待办，大家注意查收。散会。', agenda:'a4' },
+    ],
+    todos: [
+      { desc:'完成第三方登录 SDK 回退方案并验证', owner:'王强', deadline:'2026-08-22', priority:'high', topic:'第三方SDK兼容性', status:'todo', strong:true },
+      { desc:'评估有限模板数据看板的研发工作量', owner:'王强', deadline:'2026-08-20', priority:'mid', topic:'V2.3核心功能规划', status:'todo', strong:true },
+      { desc:'与设计师对齐 V2.3 详情页交互方案', owner:'李婷', deadline:'2026-08-20', priority:'mid', topic:'V2.3核心功能规划', status:'todo', strong:true },
+      { desc:'提交部门月度预算申请', owner:'各模块负责人', deadline:'2026-08-22', priority:'low', topic:'行政事项', status:'todo', strong:true },
+      { desc:'调研数据看板自定义拖拽的技术可行性', owner:'王强', deadline:'', priority:'low', topic:'数据看板实现范围', status:'todo', strong:false, note:'交付标准待补充' },
+    ],
+    conclusions: [
+      { text:'第三方登录 SDK 采用回退至上一稳定版本方案，保证 V2.3 按时上线', confidence:'high', topic:'第三方SDK兼容性' },
+      { text:'数据看板 V2.3 采用有限布局模板切换方案，研发需在周三前评估工作量', confidence:'high', topic:'数据看板实现范围' },
+      { text:'V2.3 版本核心功能包含智能推荐升级、消息中心重构、数据看板三大模块', confidence:'high', topic:'V2.3核心功能规划' },
+    ],
+    pendingItems: [
+      { text:'数据看板详情页交互方案产品与设计尚未完全对齐，需进一步确认', confidence:'low' },
+    ],
+  },
+
+  review: {
+    name: '跨部门项目评审会 - 智能客服系统立项',
+    date: '2026-08-19',
+    startTime: '14:00',
+    duration: '60分钟',
+    location: '5F-大会议室',
+    attendees: [
+      { id:'s1', name:'刘总', dept:'产品部', role:'主持人/总监' },
+      { id:'s2', name:'孙悦', dept:'产品部', role:'产品经理' },
+      { id:'s3', name:'周磊', dept:'研发部', role:'技术负责人' },
+      { id:'s4', name:'吴敏', dept:'设计部', role:'UX设计师' },
+      { id:'s5', name:'郑浩', dept:'运营部', role:'运营负责人' },
+    ],
+    agenda: [
+      { id:'a1', name:'项目背景与目标介绍', status:'done' },
+      { id:'a2', name:'核心功能与技术方案评审', status:'done' },
+      { id:'a3', name:'资源投入与排期讨论', status:'done' },
+      { id:'a4', name:'风险评估与决策', status:'done' },
+    ],
+    transcripts: [
+      { speaker:'s1', time:'00:00', text:'各位下午好，今天召集大家是评审智能客服系统的立项方案。孙悦你先介绍一下项目背景。', agenda:'a1' },
+      { speaker:'s2', time:'00:12', text:'好的。目前我们的客服团队有 30 人，日均处理咨询 2000+，其中 60% 是重复问题。智能客服系统目标是通过 AI 自动应答覆盖 70% 的常见问题，将人工客服效率提升 40%，预计半年内节省人力成本 80 万。', agenda:'a1', topic:'项目背景与目标' },
+      { speaker:'s5', time:'00:45', text:'我补充一下运营侧的数据，上个月客服满意度是 82%，主要扣分点在响应速度和夜间服务。如果智能客服能覆盖夜间，满意度应该能提升到 90% 以上。', agenda:'a1' },
+      { speaker:'s1', time:'01:08', text:'好，进入技术方案评审。周磊你说说技术选型。', agenda:'a2' },
+      { speaker:'s3', time:'01:20', text:'技术方案我们考虑两套：方案 A 基于大模型 RAG 架构，优点是回答灵活、维护成本低，但幻觉问题需要解决；方案 B 是传统意图识别+知识库匹配，优点是稳定可控，但扩展性差。我个人倾向方案 A，用 RAG + 人工审核兜底。', agenda:'a2', topic:'技术方案选型', dispute:{topic:'技术方案选型', side:'研发部立场', content:'倾向RAG方案，灵活且维护成本低'} },
+      { speaker:'s5', time:'01:55', text:'运营这边有个担忧，大模型如果出现幻觉给了错误答案，用户投诉会很麻烦。我们的客户对准确性要求很高，尤其是涉及金额和政策的问题。', agenda:'a2', dispute:{topic:'技术方案选型', side:'运营部立场', content:'担忧大模型幻觉风险，要求高准确性'} },
+      { speaker:'s3', time:'02:20', text:'这个我们考虑过，RAG 架构下所有回答都基于知识库文档，加上置信度阈值过滤，低置信度的自动转人工。实际幻觉率可以控制在 1% 以内。', agenda:'a2', resolve:'技术方案选型' },
+      { speaker:'s4', time:'02:48', text:'设计方面，智能客服的对话界面我建议采用气泡式对话，和主流 IM 体验一致。同时需要设计一个知识库管理后台，方便运营人员维护问答对。', agenda:'a2', topic:'设计方案' },
+      { speaker:'s1', time:'03:10', text:'好，技术方案基本确定用 RAG。接下来讨论资源和排期。', agenda:'a3' },
+      { speaker:'s3', time:'03:22', text:'研发需要 2 个后端、1 个前端、1 个算法，预计开发周期 3 个月。第一个月做核心引擎，第二个月做管理后台，第三个月联调测试。', agenda:'a3', topic:'资源与排期' },
+      { speaker:'s5', time:'03:50', text:'运营这边需要提前准备知识库，大概有 5000 条历史问答需要整理标注。我建议研发做一个标注工具，我们边做边标。', agenda:'a3', todo:true },
+      { speaker:'s2', time:'04:15', text:'产品这边我会在两周内输出完整 PRD，包含用户端和管理后台。吴敏的设计稿同步推进。', agenda:'a3', todo:true },
+      { speaker:'s1', time:'04:35', text:'最后说一下风险。周磊你觉得最大的风险是什么？', agenda:'a4' },
+      { speaker:'s3', time:'04:45', text:'最大的风险是知识库质量。如果初始知识库覆盖率不够，智能客服的首答率会很低，用户体验差。建议运营在开发期同步完成 3000 条高质量标注。', agenda:'a4', topic:'风险评估' },
+      { speaker:'s5', time:'05:10', text:'3000 条一个月内完成有点紧张，我们目前只有 2 个人能投入。能不能申请临时加一个实习生？', agenda:'a4', dispute:{topic:'知识库标注资源', side:'运营部立场', content:'人力不足，申请增加实习生'} },
+      { speaker:'s1', time:'05:30', text:'资源问题我来协调。项目整体通过，按 RAG 方案推进，孙悦牵头输出 PRD，周磊带队开发，郑浩准备知识库。两周后我们再开一次进度同步会。', agenda:'a4', resolve:'知识库标注资源' },
+      { speaker:'s2', time:'05:55', text:'好的，我整理一下待办事项会后同步给大家。', agenda:'a4' },
+    ],
+    todos: [
+      { desc:'输出智能客服系统完整 PRD（用户端+管理后台）', owner:'孙悦', deadline:'2026-09-02', priority:'high', topic:'项目背景与目标', status:'todo', strong:true },
+      { desc:'完成智能客服对话界面与管理后台设计稿', owner:'吴敏', deadline:'2026-09-05', priority:'high', topic:'设计方案', status:'todo', strong:true },
+      { desc:'搭建 RAG 核心引擎与知识库检索模块', owner:'周磊', deadline:'2026-09-19', priority:'high', topic:'技术方案选型', status:'todo', strong:true },
+      { desc:'完成 3000 条高质量知识库问答标注', owner:'郑浩', deadline:'2026-09-19', priority:'high', topic:'风险评估', status:'todo', strong:true, note:'交付标准待补充' },
+      { desc:'开发知识库标注工具', owner:'周磊', deadline:'2026-08-28', priority:'mid', topic:'资源与排期', status:'todo', strong:true },
+      { desc:'协调知识库标注所需的临时人力资源', owner:'刘总', deadline:'2026-08-22', priority:'mid', topic:'知识库标注资源', status:'todo', strong:true },
+      { desc:'调研竞品智能客服产品的功能与体验', owner:'孙悦', deadline:'', priority:'low', topic:'设计方案', status:'todo', strong:false },
+    ],
+    conclusions: [
+      { text:'智能客服系统立项通过，采用 RAG + 人工审核兜底技术方案', confidence:'high', topic:'技术方案选型' },
+      { text:'项目开发周期 3 个月，需投入 2后端+1前端+1算法', confidence:'high', topic:'资源与排期' },
+      { text:'核心目标：AI 覆盖 70% 常见问题，人工效率提升 40%，半年节省 80 万', confidence:'high', topic:'项目背景与目标' },
+    ],
+    pendingItems: [
+      { text:'知识库标注人力是否增加实习生尚未最终确认，需刘总协调后反馈', confidence:'low' },
+      { text:'大模型幻觉率控制在 1% 以内的目标需在测试阶段验证', confidence:'low' },
+    ],
+  },
+
+  client: {
+    name: '客户需求对接会 - 某集团数字化转型',
+    date: '2026-08-19',
+    startTime: '09:30',
+    duration: '50分钟',
+    location: '客户现场-会议室B',
+    attendees: [
+      { id:'s1', name:'林涛', dept:'销售部', role:'客户经理/主持人' },
+      { id:'s2', name:'黄薇', dept:'产品部', role:'解决方案专家' },
+      { id:'s3', name:'马超', dept:'研发部', role:'技术架构师' },
+      { id:'s4', name:'客户-王总', dept:'客户方', role:'客户IT总监' },
+      { id:'s5', name:'客户-李工', dept:'客户方', role:'客户技术负责人' },
+    ],
+    agenda: [
+      { id:'a1', name:'客户业务现状与痛点梳理', status:'done' },
+      { id:'a2', name:'核心需求确认与方案匹配', status:'done' },
+      { id:'a3', name:'系统集成与数据安全讨论', status:'done' },
+      { id:'a4', name:'项目排期与商务条款', status:'done' },
+    ],
+    transcripts: [
+      { speaker:'s1', time:'00:00', text:'王总、李工好，感谢抽空对接。今天我们主要确认一下贵司数字化转型项目的具体需求，黄薇先介绍一下我们的方案框架。', agenda:'a1' },
+      { speaker:'s4', time:'00:18', text:'好的，我们集团目前有 12 个子公司，各子公司的业务系统都是独立建设的，数据不通，管理层看报表需要人工汇总，非常低效。我们希望建一个统一的数据中台。', agenda:'a1', topic:'客户业务痛点' },
+      { speaker:'s5', time:'00:45', text:'补充一下技术现状，我们目前用的是 Oracle 数据库，有大概 50 个业务系统，数据量在 20TB 左右。最大的痛点是数据标准不统一，同一个指标在不同系统里定义不一样。', agenda:'a1' },
+      { speaker:'s2', time:'01:15', text:'理解。我们的方案是分三步走：第一阶段做数据治理，统一指标体系；第二阶段搭建数据中台，打通各系统数据；第三阶段做数据应用，比如管理看板、智能分析。', agenda:'a2', topic:'解决方案框架' },
+      { speaker:'s4', time:'01:42', text:'三步走的思路我们认可，但第一阶段数据治理需要多久？我们董事会要求年底前能看到管理层看板上线。', agenda:'a2', dispute:{topic:'项目排期', side:'客户方立场', content:'要求年底前管理层看板上线'} },
+      { speaker:'s3', time:'02:05', text:'年底前上线管理层看板是可行的，但需要做个取舍。我们可以先把核心的 5 个业务系统数据接入，做一个精简版看板，全量数据治理放到后续迭代。', agenda:'a2', dispute:{topic:'项目排期', side:'我方立场', content:'建议先接入核心5个系统做精简版'} },
+      { speaker:'s5', time:'02:35', text:'精简版可以接受，但有个前提，数据安全必须达标。我们集团是金融背景，数据不能出内网，所有部署必须在本地，不能用公有云。', agenda:'a3', topic:'数据安全要求' },
+      { speaker:'s3', time:'03:00', text:'完全理解，我们支持私有化部署，所有数据都在客户内网。另外建议做数据脱敏处理，敏感字段在中台层自动脱敏，只有授权人员能查看原始数据。', agenda:'a3' },
+      { speaker:'s4', time:'03:25', text:'脱敏这个方案好。还有一个问题，我们现有的 OA 系统需要和中台做集成，能支持吗？', agenda:'a3', topic:'系统集成需求' },
+      { speaker:'s2', time:'03:42', text:'支持的，我们提供标准的 REST API 和 Webhook 接口，OA 系统可以通过接口获取中台数据。如果 OA 是定制化系统，我们也可以做定制开发对接。', agenda:'a3' },
+      { speaker:'s1', time:'04:05', text:'好，那我们确认一下排期和商务。第一阶段从 9 月开始，12 月底上线精简版看板，整体项目预计 6 个月完成。', agenda:'a4', resolve:'项目排期' },
+      { speaker:'s4', time:'04:28', text:'排期没问题。商务方面，我们希望合同分三期付款，首付 30%，精简版上线付 40%，整体验收付 30%。', agenda:'a4', topic:'商务条款' },
+      { speaker:'s1', time:'04:50', text:'付款方式我们基本认可，具体条款我让法务出合同。下周一我们发正式的方案报价书给贵司。', agenda:'a4', todo:true },
+      { speaker:'s2', time:'05:10', text:'我这边整理一下需求确认清单，包括核心指标定义、接入系统清单、安全合规要求，本周四发给王总确认。', agenda:'a4', todo:true },
+      { speaker:'s4', time:'05:30', text:'好的，那今天先到这里，期待合作。', agenda:'a4' },
+    ],
+    todos: [
+      { desc:'输出正式方案报价书并发送客户', owner:'林涛', deadline:'2026-08-25', priority:'high', topic:'商务条款', status:'todo', strong:true },
+      { desc:'整理需求确认清单（核心指标/接入系统/安全要求）', owner:'黄薇', deadline:'2026-08-21', priority:'high', topic:'解决方案框架', status:'todo', strong:true },
+      { desc:'制定私有化部署与数据脱敏技术方案', owner:'马超', deadline:'2026-08-28', priority:'high', topic:'数据安全要求', status:'todo', strong:true },
+      { desc:'评估 OA 系统定制化对接工作量', owner:'马超', deadline:'2026-08-25', priority:'mid', topic:'系统集成需求', status:'todo', strong:true },
+      { desc:'准备合同初稿（三期付款条款）', owner:'林涛', deadline:'', priority:'mid', topic:'商务条款', status:'todo', strong:true, note:'交付标准待补充' },
+      { desc:'调研客户现有 50 个业务系统的数据接口情况', owner:'马超', deadline:'', priority:'low', topic:'客户业务痛点', status:'todo', strong:false },
+    ],
+    conclusions: [
+      { text:'项目采用分三阶段实施方案：数据治理→数据中台→数据应用', confidence:'high', topic:'解决方案框架' },
+      { text:'12月底前上线精简版管理层看板，先接入核心5个业务系统', confidence:'high', topic:'项目排期' },
+      { text:'系统采用私有化部署，数据不出内网，中台层自动脱敏', confidence:'high', topic:'数据安全要求' },
+      { text:'合同采用三期付款：30%首付+40%阶段验收+30%终验', confidence:'high', topic:'商务条款' },
+    ],
+    pendingItems: [
+      { text:'客户 OA 系统具体版本与接口能力尚未确认，需进一步调研', confidence:'low' },
+      { text:'全量 50 个业务系统的数据接入范围与优先级待后续确认', confidence:'low' },
+    ],
+  },
+};
+
+/* ========== 二、全局状态 ========== */
+let state = {
+  currentScene: 'weekly',
+  demoMode: 'manual',
+  currentView: 'meeting',
+  sideTab: 'topics',
+  transcriptIndex: 0,
+  meetingStarted: false,
+  meetingEnded: false,
+  minutesGenerated: false,
+  timerInterval: null,
+  elapsedSeconds: 0,
+  topics: [],
+  disputes: [],
+  resolvedDisputes: [],
+  transcripts: [],
+  pendingUnknownCount: 0,
+  mergeHint: null,
+  autoPlayTimer: null,
+  autoPlayStep: 0,
+  permissionHostOnly: true,
+  changeLog: [],
+  invalidMeeting: false,
+  syncedPlatforms: {},
+  realRecording: false,
+  realRecordingSession: false,
+  activeSpeakerNo: 1,
+  lastSpeechAt: 0,
+  mediaRecorder: null,
+  mediaStream: null,
+  recognition: null,
+  audioChunks: [],
+  recordedAudioUrl: '',
+  generatedScene: null,
+  forceFullMinutes: false,
+};
+
+/* ========== 三、工具函数 ========== */
+function $(id) { return document.getElementById(id); }
+function fmtTime(sec) {
+  const m = String(Math.floor(sec/60)).padStart(2,'0');
+  const s = String(sec%60).padStart(2,'0');
+  return `${m}:${s}`;
+}
+function getSpeaker(id) {
+  const scene = SCENES[state.currentScene];
+  if (/^live\d+$/.test(id)) return { id, name:'说话人' + id.replace('live',''), dept:'实时录音', role:'发言人' };
+  if (id === 'unknown') return { id:'unknown', name:'未知发言人', dept:'', role:'', unknown:true };
+  return scene.attendees.find(a => a.id === id) || { id, name:'未知', dept:'' };
+}
+function toast(msg, type='info', duration=3000) {
+  const icons = { info:'ℹ️', success:'✅', warning:'⚠️', danger:'❌' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type]||icons.info}</span><span>${msg}</span>`;
+  $('toastContainer').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(20px)'; el.style.transition='all 0.3s'; setTimeout(()=>el.remove(),300); }, duration);
+}
+function logChange(action) {
+  const now = new Date();
+  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  state.changeLog.push({ time:t, action });
+}
+
+/* ========== 四、初始化与场景切换 ========== */
+function initScene(sceneKey) {
+  state.realRecording = false;
+  try { state.recognition?.stop(); } catch {}
+  try { if (state.mediaRecorder?.state === 'recording') state.mediaRecorder.stop(); } catch {}
+  state.mediaStream?.getTracks?.().forEach(t=>t.stop());
+  state.currentScene = sceneKey;
+  const scene = SCENES[sceneKey];
+  state.transcriptIndex = 0;
+  state.transcripts = [];
+  state.topics = [];
+  state.disputes = [];
+  state.resolvedDisputes = [];
+  state.pendingUnknownCount = 0;
+  state.mergeHint = null;
+  state.meetingStarted = false;
+  state.meetingEnded = false;
+  state.minutesGenerated = false;
+  state.elapsedSeconds = 0;
+  state.changeLog = [];
+  state.invalidMeeting = false;
+  state.syncedPlatforms = {};
+  state.realRecording = false;
+  state.realRecordingSession = false;
+  state.activeSpeakerNo = 1;
+  state.lastSpeechAt = 0;
+  state.audioChunks = [];
+  state.generatedScene = null;
+  state.forceFullMinutes = false;
+
+  // 初始议题从议程生成
+  scene.agenda.forEach((a, i) => {
+    state.topics.push({
+      id: 't'+i,
+      title: a.name,
+      agendaId: a.id,
+      speakers: [],
+      pointCount: 0,
+      points: [],
+      completed: false,
+      active: i === 0,
+    });
+  });
+
+  renderAll();
+  stopTimer();
+  $('meetingTimer').textContent = '00:00';
+  if ($('realRecLabel')) $('realRecLabel').textContent = '等待开始录音';
+  if ($('realRecDot')) $('realRecDot').style.opacity = '.35';
+  if ($('recordBtn')) { $('recordBtn').disabled = false; $('recordBtn').classList.remove('recording'); $('recordBtn').textContent = '● 开始录音'; }
+  if ($('stopRecordBtn')) $('stopRecordBtn').disabled = true;
+  if ($('speakerSwitchBtn')) { $('speakerSwitchBtn').disabled = true; $('speakerSwitchBtn').textContent = '说话人1 ⇄'; }
+  switchView('meeting');
+  $('pendingBubble').style.display = 'none';
+  $('minutesFooter').style.display = 'none';
+  $('genOverlay').classList.remove('active');
+  toast(`已加载场景：${scene.name}`, 'success');
+}
+
+function startDemo() {
+  $('landing').style.display = 'none';
+  $('app').classList.add('active');
+  initScene(state.currentScene);
+}
+
+function backToLanding() {
+  stopTimer();
+  stopAutoPlay();
+  $('app').classList.remove('active');
+  $('landing').style.display = 'flex';
+}
+
+function resetDemo() {
+  stopAutoPlay();
+  initScene(state.currentScene);
+  toast('演示已重置', 'info');
+}
+
+// 场景切换按钮
+document.querySelectorAll('#landingSceneBtns .scene-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#landingSceneBtns .scene-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.currentScene = btn.dataset.scene;
+  });
+});
+document.querySelectorAll('#navSceneSwitch .nav-scene-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#navSceneSwitch .nav-scene-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    stopAutoPlay();
+    initScene(btn.dataset.scene);
+  });
+});
+
+/* ========== 五、计时器 ========== */
+function startTimer() {
+  stopTimer();
+  state.timerInterval = setInterval(() => {
+    state.elapsedSeconds++;
+    $('meetingTimer').textContent = fmtTime(state.elapsedSeconds);
+  }, 1000);
+}
+function stopTimer() {
+  if (state.timerInterval) { clearInterval(state.timerInterval); state.timerInterval = null; }
+}
+
+/* ========== 六、视图切换 ========== */
+function switchView(view) {
+  state.currentView = view;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  $('view-'+view).classList.add('active');
+}
+function switchSideTab(tab) {
+  state.sideTab = tab;
+  document.querySelectorAll('.side-tab').forEach(t => t.classList.toggle('active', t.dataset.sidetab === tab));
+  renderSidePanel();
+}
+
+/* ========== 七、实时转写引擎 ========== */
+async function startRealRecording() {
+  if (state.realRecording) return;
+  if (!navigator.mediaDevices?.getUserMedia) { toast('当前浏览器不支持麦克风录音，请使用最新版 Chrome 或 Edge', 'danger', 5000); return; }
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) { toast('当前浏览器不支持实时语音识别，请使用最新版 Chrome 或 Edge', 'danger', 5000); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true } });
+    state.mediaStream = stream;
+    state.audioChunks = [];
+    state.realRecording = true;
+    state.realRecordingSession = true;
+    state.meetingStarted = true;
+    state.meetingEnded = false;
+    state.elapsedSeconds = 0;
+    state.transcripts = [];
+    state.activeSpeakerNo = 1;
+    state.lastSpeechAt = 0;
+    renderAllTranscripts();
+    startTimer();
+
+    const recorder = new MediaRecorder(stream);
+    state.mediaRecorder = recorder;
+    recorder.ondataavailable = e => { if (e.data.size) state.audioChunks.push(e.data); };
+    recorder.onstop = () => {
+      if (!state.audioChunks.length) return;
+      if (state.recordedAudioUrl) URL.revokeObjectURL(state.recordedAudioUrl);
+      state.recordedAudioUrl = URL.createObjectURL(new Blob(state.audioChunks, { type:recorder.mimeType || 'audio/webm' }));
+    };
+    recorder.start(500);
+
+    const recognition = new Recognition();
+    state.recognition = recognition;
+    recognition.lang = 'zh-CN';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = event => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const text = event.results[i][0].transcript.trim();
+        if (event.results[i].isFinal) commitLiveTranscript(text);
+        else interim += text;
+      }
+      updateLiveInterim(interim);
+    };
+    recognition.onerror = event => {
+      if (event.error !== 'no-speech' && event.error !== 'aborted') toast('语音识别提示：' + event.error, 'warning');
+    };
+    recognition.onend = () => { if (state.realRecording) { try { recognition.start(); } catch {} } };
+    recognition.start();
+    startMicMeter(stream);
+
+    $('recordBtn').disabled = true;
+    $('recordBtn').classList.add('recording');
+    $('recordBtn').textContent = '● 正在录音';
+    $('stopRecordBtn').disabled = false;
+    $('speakerSwitchBtn').disabled = false;
+    $('speakerSwitchBtn').textContent = '说话人1 ⇄';
+    $('realRecLabel').textContent = '录音中 · 实时转写';
+    $('realRecDot').style.opacity = '1';
+    $('transcriptStatus').textContent = 'AI 正在实时识别；停顿超过约 2.5 秒将自动切换说话人';
+    toast('麦克风已开启，请开始讲话', 'success');
+  } catch (error) {
+    toast(error?.name === 'NotAllowedError' ? '未获得麦克风权限，请在浏览器地址栏允许麦克风' : '无法启动录音：' + error.message, 'danger', 5000);
+  }
+}
+
+function commitLiveTranscript(text) {
+  if (!text) return;
+  const now = Date.now();
+  if (state.lastSpeechAt && now - state.lastSpeechAt > 2500) state.activeSpeakerNo = state.activeSpeakerNo === 1 ? 2 : 1;
+  state.lastSpeechAt = now;
+  const activeTopic = state.topics.find(t => t.active);
+  const hasDisputeSignal = /但是|不过|不同意|不赞成|担心|顾虑|风险|不行|反对|分歧/.test(text);
+  const dispute = hasDisputeSignal ? { topic:(activeTopic?.title || '当前议题') + ' · 方案分歧', content:summarizeSpeech(text) } : undefined;
+  removeLiveInterim();
+  addTranscript({ speaker:'live' + state.activeSpeakerNo, time:fmtTime(state.elapsedSeconds), text, agenda:activeTopic?.agendaId || 'live-a1', topic:activeTopic?.title || '实时讨论', dispute });
+  $('speakerSwitchBtn').textContent = `说话人${state.activeSpeakerNo} ⇄`;
+}
+
+function updateLiveInterim(text) {
+  removeLiveInterim();
+  if (!text) return;
+  const el = document.createElement('div');
+  el.id = 'liveInterim';
+  el.className = 'live-interim';
+  el.innerHTML = `<strong>说话人${state.activeSpeakerNo}</strong>　${text}`;
+  $('transcriptBody').appendChild(el);
+  $('transcriptBody').scrollTop = $('transcriptBody').scrollHeight;
+}
+function removeLiveInterim() { $('liveInterim')?.remove(); }
+function switchLiveSpeaker() {
+  if (!state.realRecording) return;
+  state.activeSpeakerNo = state.activeSpeakerNo === 1 ? 2 : 1;
+  state.lastSpeechAt = Date.now();
+  $('speakerSwitchBtn').textContent = `说话人${state.activeSpeakerNo} ⇄`;
+  toast(`已切换为说话人${state.activeSpeakerNo}`, 'info', 1600);
+}
+function startMicMeter(stream) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 64;
+    ctx.createMediaStreamSource(stream).connect(analyser);
+    state.audioContext = ctx;
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    const draw = () => {
+      if (!state.realRecording) return;
+      analyser.getByteFrequencyData(data);
+      const avg = data.reduce((a,b)=>a+b,0) / data.length;
+      document.querySelectorAll('#micLevel i').forEach((bar,i) => bar.style.height = Math.max(4, Math.min(22, avg/5 + (i%3)*2)) + 'px');
+      state.micFrame = requestAnimationFrame(draw);
+    };
+    draw();
+  } catch { $('micLevel')?.classList.add('active'); }
+}
+
+function stopRealRecording() {
+  if (!state.realRecording) return;
+  state.realRecording = false;
+  removeLiveInterim();
+  try { state.recognition?.stop(); } catch {}
+  try { if (state.mediaRecorder?.state !== 'inactive') state.mediaRecorder?.stop(); } catch {}
+  state.mediaStream?.getTracks().forEach(t => t.stop());
+  if (state.micFrame) cancelAnimationFrame(state.micFrame);
+  state.audioContext?.close?.();
+  stopTimer();
+  $('recordBtn').classList.remove('recording');
+  $('recordBtn').textContent = '● 开始录音';
+  $('stopRecordBtn').disabled = true;
+  $('speakerSwitchBtn').disabled = true;
+  $('realRecLabel').textContent = '录音已结束';
+  $('realRecDot').style.opacity = '.35';
+  $('transcriptStatus').textContent = '录音已结束，AI 正在生成结构化会议纪要...';
+  buildGeneratedSceneFromRecording();
+  endMeeting();
+}
+
+function cleanSpeechText(text='') {
+  return text
+    .replace(/^(嗯+|呃+|额+|啊+|哦+|好的?[，,]?|对[，,]?|那个[，,]?|我补充一下[，,]?|我觉得[，,]?|我认为[，,]?)+/g,'')
+    .replace(/(嗯+|呃+|额+|怎么说呢|你知道吧|对不对|是吧|然后呢|这个这个)/g,'')
+    .replace(/([，。！？；])\1+/g,'$1').replace(/\s+/g,' ').trim();
+}
+function summarizeSpeech(text, max=72) {
+  const cleaned = cleanSpeechText(text);
+  const clauses = cleaned.split(/[。！？；]/).map(x=>x.trim()).filter(x=>x.length>3);
+  const ranked = clauses.sort((a,b)=>Number(/决定|确定|建议|需要|负责|风险|目标|方案|完成/.test(b))-Number(/决定|确定|建议|需要|负责|风险|目标|方案|完成/.test(a)) || b.length-a.length);
+  let summary = ranked[0] || cleaned || '未提炼出有效内容';
+  summary = summary.replace(/^(关于|针对)\s*/,'').replace(/我们(这边)?/g,'').replace(/可以考虑/g,'建议').trim();
+  return summary.length>max ? summary.slice(0,max)+'…' : summary;
+}
+function uniqueSummaries(records, limit=4) {
+  const seen = new Set();
+  return records.map(x=>({record:x,text:summarizeSpeech(x.text)})).filter(x=>{const key=x.text.replace(/[，。\s]/g,'').slice(0,16);if(!key||seen.has(key))return false;seen.add(key);return true}).slice(0,limit);
+}
+function deriveAgendaTitle(records, index, used) {
+  const text = records.map(x=>cleanSpeechText(x.text)).join('');
+  const candidates = [
+    ['目标与背景对齐',/目标|背景|现状|痛点|需求/g],['产品需求与方案',/产品|需求|功能|方案|体验|设计/g],
+    ['技术方案与实现',/技术|研发|架构|接口|数据|开发|性能/g],['计划与排期',/排期|时间|上线|发布|截止|进度/g],
+    ['预算与资源',/预算|成本|报价|资源|人力|投入/g],['市场与客户',/市场|客户|用户|销售|渠道|运营/g],
+    ['风险与分歧处理',/风险|问题|担心|争议|分歧|顾虑/g],['行动项与责任分工',/负责|完成|跟进|安排|提交|行动/g]
+  ];
+  const scored = candidates.map(([name,re])=>[name,(text.match(re)||[]).length]).sort((a,b)=>b[1]-a[1]);
+  let title = scored[0]?.[1]>0 ? scored[0][0] : `议程${index}`;
+  if (used.has(title)) title = scored.find(x=>x[1]>0&&!used.has(x[0]))?.[0] || `议程${index}`;
+  used.add(title); return title;
+}
+function buildGeneratedSceneFromRecording() {
+  const now = new Date(), records = state.transcripts, agenda = [], usedTitles = new Set();
+  const agendaCount = Math.min(4, Math.max(1, Math.ceil(records.length/4)));
+  const chunkSize = Math.max(1, Math.ceil(records.length/agendaCount));
+  for (let start=0,n=1;start<records.length;start+=chunkSize,n++) {
+    const group=records.slice(start,start+chunkSize), name=deriveAgendaTitle(group,n,usedTitles), id='live-a'+n;
+    agenda.push({id,name,status:'done'}); group.forEach(x=>{x.agenda=id;x.topic=name});
+  }
+  if (!agenda.length) agenda.push({id:'live-a1',name:'议程1',status:'done'});
+  const find = regex => records.filter(x=>regex.test(cleanSpeechText(x.text)));
+  let conclusionRecords=find(/决定|确定|同意|采用|结论|就按|通过|统一|达成/);
+  if(!conclusionRecords.length&&records.length) conclusionRecords=[records[records.length-1]];
+  const pendingRecords=find(/待确认|需要确认|再评估|再讨论|不确定|尚未|之后确认|没有定/);
+  const todoRecords=find(/负责|完成|截止|之前|跟进|安排|输出|提交/);
+  const disputeRecords=find(/但是|不过|不同意|担心|风险|分歧|顾虑/);
+  disputeRecords.forEach(x=>x.dispute={topic:'会议中的风险与分歧',content:summarizeSpeech(x.text)});
+  if(disputeRecords.length&&conclusionRecords.length) conclusionRecords[conclusionRecords.length-1].resolve='会议中的风险与分歧';
+  const agendaName=rec=>agenda.find(a=>a.id===rec.agenda)?.name||agenda[0].name;
+  const attendees=[...new Set(records.map(x=>x.speakerName))].map((name,i)=>({id:'live'+(i+1),name,dept:'实时录音',role:'参会人'}));
+  state.generatedScene={name:'实时录音会议',date:now.toLocaleDateString('zh-CN'),startTime:now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),duration:fmtTime(state.elapsedSeconds),location:'浏览器麦克风',attendees:attendees.length?attendees:[{id:'live1',name:'说话人1',dept:'实时录音',role:'参会人'}],agenda,transcripts:records,
+    conclusions:uniqueSummaries(conclusionRecords,5).map(x=>({text:x.text,confidence:'high',topic:agendaName(x.record)})),
+    pendingItems:uniqueSummaries(pendingRecords,4).map(x=>({text:x.text,confidence:'low',topic:agendaName(x.record)})),
+    todos:uniqueSummaries(todoRecords,6).map((x,i)=>({desc:x.text,owner:x.record.speakerName,deadline:(x.record.text.match(/\d{1,2}月\d{1,2}日|周[一二三四五六日]|明天|后天/)||['待确认'])[0],priority:i<2?'high':'mid',topic:agendaName(x.record),status:'todo',strong:true}))};
+  state.disputes=disputeRecords.length?[{id:'live-dispute',topic:'会议中的风险与分歧',sides:uniqueSummaries(disputeRecords,3).map(x=>({speaker:x.record.speakerName,content:x.text,oppose:true})),status:'open',transcriptIds:disputeRecords.map(x=>x.id)}]:[];
+  state.topics=agenda.map((a,i)=>{const group=records.filter(x=>x.agenda===a.id);return{id:'live-t'+i,title:a.name,agendaId:a.id,speakers:[...new Set(group.map(x=>x.speakerName))],pointCount:group.length,points:uniqueSummaries(group,3).map(x=>x.text),completed:true,active:false}});
+}
+
+function endSimulatedMeeting() {
+  if (state.realRecording) { toast('真实录音正在进行，请使用“结束录音并生成纪要”', 'warning'); return; }
+  state.realRecordingSession = false;
+  state.forceFullMinutes = true;
+  endMeeting();
+}
+
+function nextTranscript() {
+  const scene = SCENES[state.currentScene];
+  if (state.transcriptIndex >= scene.transcripts.length) {
+    toast('所有发言已播放完毕，可以结束会议了', 'info');
+    return;
+  }
+  const item = scene.transcripts[state.transcriptIndex];
+  state.transcriptIndex++;
+  addTranscript(item);
+}
+
+function addTranscript(item) {
+  const speaker = getSpeaker(item.speaker);
+  const transcriptItem = {
+    ...item,
+    speakerName: speaker.name,
+    speakerDept: speaker.dept,
+    speakerUnknown: speaker.unknown || item.unknown,
+    id: 'tr_' + Date.now() + '_' + Math.random().toString(36).substr(2,5),
+    displayed: '',
+    isDispute: !!item.dispute,
+    resolved: !!item.resolve,
+  };
+  state.transcripts.push(transcriptItem);
+
+  // 未知发言人计数
+  if (transcriptItem.speakerUnknown) {
+    state.pendingUnknownCount++;
+    $('pendingBubble').style.display = 'flex';
+    $('pendingCount').textContent = state.pendingUnknownCount;
+  }
+
+  // 处理议题
+  handleTopicUpdate(item);
+
+  // 处理争议
+  if (item.dispute) {
+    handleDispute(item, transcriptItem.id);
+  }
+  if (item.resolve) {
+    resolveDispute(item.resolve);
+  }
+
+  // 逐字上屏效果
+  renderTranscriptItem(transcriptItem);
+  typeWriter(transcriptItem);
+}
+
+function typeWriter(item) {
+  const el = document.getElementById(item.id);
+  if (!el) return;
+  const contentEl = el.querySelector('.transcript-content');
+  if (!contentEl) return;
+  let i = 0;
+  const fullText = item.text;
+  contentEl.innerHTML = '<span class="typing-cursor"></span>';
+  const interval = setInterval(() => {
+    if (i >= fullText.length) {
+      clearInterval(interval);
+      contentEl.innerHTML = fullText;
+      if (item.isDispute) contentEl.classList.add('dispute-mark');
+      return;
+    }
+    i++;
+    contentEl.innerHTML = fullText.substring(0, i) + '<span class="typing-cursor"></span>';
+    // 自动滚动
+    const body = $('transcriptBody');
+    body.scrollTop = body.scrollHeight;
+  }, 30); // 约 200ms 内完成短句上屏
+}
+
+function renderTranscriptItem(item) {
+  const body = $('transcriptBody');
+  const el = document.createElement('div');
+  el.className = 'transcript-item';
+  el.id = item.id;
+  const speakerClass = item.speakerUnknown ? 'unknown' : '';
+  const deptTag = item.speakerDept ? `<span class="dept">${item.speakerDept}</span>` : '';
+  el.innerHTML = `
+    <div class="transcript-meta">
+      <span class="transcript-time">${item.time}</span>
+      <span class="transcript-speaker ${speakerClass}">${item.speakerName}${deptTag}</span>
+    </div>
+    <div class="transcript-content"></div>
+  `;
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+}
+
+function renderAllTranscripts() {
+  const body = $('transcriptBody');
+  body.innerHTML = '';
+  state.transcripts.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'transcript-item';
+    el.id = item.id;
+    const speakerClass = item.speakerUnknown ? 'unknown' : '';
+    const deptTag = item.speakerDept ? `<span class="dept">${item.speakerDept}</span>` : '';
+    const disputeClass = item.isDispute ? 'dispute-mark' : '';
+    el.innerHTML = `
+      <div class="transcript-meta">
+        <span class="transcript-time">${item.time}</span>
+        <span class="transcript-speaker ${speakerClass}">${item.speakerName}${deptTag}</span>
+      </div>
+      <div class="transcript-content ${disputeClass}">${item.text}</div>
+    `;
+    body.appendChild(el);
+  });
+}
+
+/* ========== 八、议题管理 ========== */
+function handleTopicUpdate(item) {
+  // 根据议程ID激活对应议题
+  if (item.agenda) {
+    state.topics.forEach(t => {
+      t.active = (t.agendaId === item.agenda);
+      if (t.agendaId === item.agenda) {
+        // 添加发言人
+        const speaker = getSpeaker(item.speaker);
+        if (!t.speakers.includes(speaker.name)) t.speakers.push(speaker.name);
+        t.pointCount++;
+        // 提取关键观点（简单模拟：取发言的前30字）
+        if (t.points.length < 3 && item.text.length > 10) {
+          const point = summarizeSpeech(item.text, 56);
+          if (point && !t.points.includes(point)) t.points.push(point);
+        }
+      }
+    });
+  }
+  // 动态新增议题
+  if (item.topic && !state.topics.find(t => t.title === item.topic)) {
+    const newTopic = {
+      id: 't_' + Date.now(),
+      title: item.topic,
+      agendaId: null,
+      speakers: [getSpeaker(item.speaker).name],
+      pointCount: 1,
+      points: [item.text.substring(0, 40) + (item.text.length > 40 ? '...' : '')],
+      completed: false,
+      active: true,
+    };
+    state.topics.forEach(t => t.active = false);
+    state.topics.push(newTopic);
+  }
+  renderSidePanel();
+}
+
+function renderSidePanel() {
+  if (state.sideTab === 'topics') {
+    renderTopics();
+  } else {
+    renderDisputes();
+  }
+  $('topicCount').textContent = state.topics.filter(t=>!t.completed).length;
+  $('disputeCount').textContent = state.disputes.length;
+}
+
+function renderTopics() {
+  const body = $('sideBody');
+  const active = state.topics.filter(t => !t.completed);
+  const completed = state.topics.filter(t => t.completed);
+
+  let html = '';
+
+  // 合并提示
+  if (state.mergeHint) {
+    html += `
+      <div class="merge-hint">
+        <span class="merge-hint-text">检测到语义相近议题：<strong>${state.mergeHint.a.title}</strong> 与 <strong>${state.mergeHint.b.title}</strong>，是否合并？</span>
+        <div class="merge-hint-btns">
+          <button class="merge-hint-btn ok" onclick="confirmMerge()">合并</button>
+          <button class="merge-hint-btn cancel" onclick="cancelMerge()">取消</button>
+        </div>
+      </div>
+    `;
+  }
+
+  html += '<div class="topic-group-label">进行中议题 <span class="count">'+active.length+'</span></div>';
+  active.forEach(t => {
+    html += renderTopicCard(t);
+  });
+
+  if (completed.length > 0) {
+    html += '<div class="topic-group-label">已完成议题 <span class="count">'+completed.length+'</span></div>';
+    completed.forEach(t => {
+      html += renderTopicCard(t);
+    });
+  }
+
+  body.innerHTML = html;
+}
+
+function setupMinutesAnchors() {
+  const body = $('minutesBody');
+  if (!body || body.querySelector('.minutes-anchor')) return;
+  const sections = [...body.querySelectorAll('.minutes-section')].filter(section=>section.querySelector('.minutes-section-title'));
+  sections.forEach((section, index) => section.id = `minutes-section-${index + 1}`);
+  const nav = document.createElement('nav');
+  nav.className = 'minutes-anchor';
+  nav.setAttribute('aria-label', '会议纪要目录');
+  nav.innerHTML = sections.map((section, index) => {
+    const raw = section.querySelector('.minutes-section-title')?.textContent || `模块${index+1}`;
+    const label = raw.replace(/^\d+/, '').trim().replace('会议基本信息','基本信息').replace('议程执行概览','会议议程').replace('核心结论','已达成结论').replace('关键观点摘要','关键观点').replace('争议点汇总','争议与处理').replace('待办任务清单','任务清单').replace('附录：全文转写','全文转写');
+    return `<button type="button" data-target="${section.id}">${label}</button>`;
+  }).join('');
+  nav.querySelector('button')?.classList.add('active');
+  nav.addEventListener('click', e => {
+    const button = e.target.closest('button');
+    const target = button?.dataset.target;
+    if (target) {
+      nav.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b===button));
+      document.getElementById(target)?.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  });
+  body.addEventListener('scroll', () => {
+    let current = sections[0];
+    sections.forEach(section => { if (section.offsetTop <= body.scrollTop + 100) current = section; });
+    nav.querySelectorAll('button').forEach(button => button.classList.toggle('active', button.dataset.target === current?.id));
+  }, { passive:true });
+  body.prepend(nav);
+  setupSourcePane();
+}
+
+function setupSourcePane() {
+  const container = document.querySelector('.minutes-container');
+  if (!container || container.querySelector('.minutes-source-pane')) return;
+  container.classList.add('has-source-pane');
+  const pane = document.createElement('aside');
+  pane.className = 'minutes-source-pane';
+  const scene = state.generatedScene || SCENES[state.currentScene];
+  pane.innerHTML = `<div class="source-pane-header"><span style="color:var(--warning);font-size:14px;vertical-align:2px;">●</span> 原文<span class="source-pane-subtitle">点击灰色“···”定位；点击转写段落可展开上下文</span></div><div class="source-pane-list" id="sourcePaneList"></div><div class="source-player"><div class="source-progress"><i></i></div><div class="source-controls"><span>${fmtTime(Math.min(state.elapsedSeconds,132))} / ${scene.duration}</span><button class="source-play" onclick="toast(state.recordedAudioUrl?'正在播放录音片段':'当前为转写演示，无可播放音频','info')">▶</button><span>1.0x</span></div></div>`;
+  container.appendChild(pane);
+  renderSourcePane();
+}
+
+function renderSourcePane(activeIndex = -1) {
+  const list = $('sourcePaneList');
+  if (!list) return;
+  list.innerHTML = state.transcripts.map((t, index) => `<article class="source-record ${index===activeIndex?'active':''}" id="source-pane-${index}" onclick="showTranscriptContext(${index})" style="cursor:pointer"><div class="source-record-meta"><b>${t.speakerName}</b> · ${t.time}${t.topic?` · ${t.topic}`:''}</div><div>${t.text}</div></article>`).join('');
+  if (activeIndex >= 0) setTimeout(() => $('source-pane-' + activeIndex)?.scrollIntoView({behavior:'smooth', block:'center'}), 20);
+}
+
+function renderTopicCard(t) {
+  const pointsHtml = t.points.slice(0,3).map(p => `<li>${p}</li>`).join('');
+  const moreHtml = t.points.length > 3 ? `<li class="more-points">还有 ${t.points.length-3} 条观点</li>` : '';
+  return `
+    <div class="topic-card ${t.active?'active':''} ${t.completed?'completed':''}" data-id="${t.id}">
+      <div class="topic-card-header">
+        <span class="topic-drag">⋮⋮</span>
+        <span class="topic-title" contenteditable="true" onblur="editTopicTitle('${t.id}', this.textContent)">${t.title}</span>
+        <div class="topic-actions">
+          <button class="topic-action-btn" onclick="toggleTopicComplete('${t.id}')" title="${t.completed?'恢复':'完成'}">${t.completed?'↩':'✓'}</button>
+          <button class="topic-action-btn" onclick="deleteTopic('${t.id}')" title="删除">✕</button>
+        </div>
+      </div>
+      <div class="topic-meta">
+        <span>👤 ${t.speakers.length}人</span>
+        <span>💬 ${t.pointCount}条</span>
+      </div>
+      <ul class="topic-points">${pointsHtml}${moreHtml}</ul>
+    </div>
+  `;
+}
+
+function editTopicTitle(id, newTitle) {
+  const t = state.topics.find(x => x.id === id);
+  if (t && newTitle.trim() && newTitle !== t.title) {
+    const old = t.title;
+    t.title = newTitle.trim();
+    logChange(`修改议题名称：${old} → ${t.title}`);
+    toast('议题名称已更新', 'success');
+  }
+}
+
+function toggleTopicComplete(id) {
+  const t = state.topics.find(x => x.id === id);
+  if (t) {
+    t.completed = !t.completed;
+    t.active = false;
+    logChange(`${t.completed?'完成':'恢复'}议题：${t.title}`);
+    renderSidePanel();
+    toast(t.completed ? '议题已标记完成' : '议题已恢复', 'success');
+  }
+}
+
+function deleteTopic(id) {
+  const t = state.topics.find(x => x.id === id);
+  if (t) {
+    state.topics = state.topics.filter(x => x.id !== id);
+    logChange(`删除议题：${t.title}`);
+    renderSidePanel();
+    toast('议题已删除', 'info');
+  }
+}
+
+function showAddTopicModal() {
+  openModal('新增议题', `
+    <div class="form-group">
+      <label class="form-label">议题名称</label>
+      <input class="form-input" id="newTopicInput" placeholder="请输入议题名称">
+    </div>
+  `, `
+    <button class="modal-btn" onclick="closeModal()">取消</button>
+    <button class="modal-btn primary" onclick="addTopic()">确认新增</button>
+  `);
+  setTimeout(() => $('newTopicInput').focus(), 100);
+}
+
+function addTopic() {
+  const input = $('newTopicInput');
+  const title = input.value.trim();
+  if (!title) { toast('请输入议题名称', 'warning'); return; }
+  state.topics.forEach(t => t.active = false);
+  state.topics.push({
+    id: 't_' + Date.now(),
+    title, agendaId: null, speakers: [], pointCount: 0, points: [], completed: false, active: true,
+  });
+  logChange(`手动新增议题：${title}`);
+  closeModal();
+  renderSidePanel();
+  toast('议题已新增', 'success');
+}
+
+function simulateMergeHint() {
+  if (state.topics.length < 2) { toast('议题数量不足，无法模拟合并', 'warning'); return; }
+  // 找两个未完成的议题
+  const candidates = state.topics.filter(t => !t.completed);
+  if (candidates.length < 2) { toast('未完成议题不足', 'warning'); return; }
+  state.mergeHint = { a: candidates[0], b: candidates[1] };
+  renderSidePanel();
+  showValueTip('议题合并', 'AI 检测到语义相近的议题时会弹出合并建议，合并后标题自动生成为「议题A / 议题B」，保留全部分歧记录，支持撤销。', document.querySelector('.side-panel'));
+}
+
+function confirmMerge() {
+  if (!state.mergeHint) return;
+  const { a, b } = state.mergeHint;
+  const merged = {
+    id: 't_' + Date.now(),
+    title: `${a.title} / ${b.title}`,
+    agendaId: a.agendaId || b.agendaId,
+    speakers: [...new Set([...a.speakers, ...b.speakers])],
+    pointCount: a.pointCount + b.pointCount,
+    points: [...a.points, ...b.points].slice(0, 3),
+    completed: false, active: true,
+    mergedFrom: [a.id, b.id],
+  };
+  state.topics = state.topics.filter(t => t.id !== a.id && t.id !== b.id);
+  state.topics.forEach(t => t.active = false);
+  state.topics.unshift(merged);
+  logChange(`合并议题：${a.title} + ${b.title} → ${merged.title}`);
+  state.mergeHint = null;
+  renderSidePanel();
+  toast('议题已合并（可撤销）', 'success');
+  // 提供撤销
+  setTimeout(() => {
+    toast('点击撤销可恢复', 'info', 4000);
+  }, 500);
+}
+
+function cancelMerge() {
+  state.mergeHint = null;
+  renderSidePanel();
+}
+
+/* ========== 九、争议管理 ========== */
+function handleDispute(item, transcriptId) {
+  const d = item.dispute;
+  // 检查是否已存在相同主题的争议
+  let existing = state.disputes.find(x => x.topic === d.topic);
+  if (!existing) {
+    existing = {
+      id: 'd_' + Date.now(),
+      topic: d.topic,
+      sides: [],
+      status: 'open',
+      transcriptIds: [],
+      startedAt: item.time,
+      createdAt: Date.now(),
+    };
+    state.disputes.push(existing);
+  }
+  existing.sides.push({ speaker: getSpeaker(item.speaker).name, content: d.content, oppose: true });
+  existing.transcriptIds.push(transcriptId);
+  existing.lastAt = item.time;
+  renderSidePanel();
+}
+
+function resolveDispute(topic) {
+  const idx = state.disputes.findIndex(d => d.topic === topic);
+  if (idx > -1) {
+    const d = state.disputes[idx];
+    d.status = 'resolved';
+    if (!d.resolution) d.resolution = '会议讨论已形成一致意见，按最新发言中的决议执行。';
+    d.resolvedAt = fmtTime(state.elapsedSeconds);
+    state.disputes.splice(idx, 1);
+    state.resolvedDisputes.push(d);
+    logChange(`争议已解决：${topic}`);
+    renderSidePanel();
+    toast(`争议「${topic}」已收敛`, 'success');
+  }
+}
+
+function renderDisputes() {
+  const body = $('sideBody');
+  let html = '';
+
+  if (state.disputes.length === 0 && state.resolvedDisputes.length === 0) {
+    html = '<div class="empty-state"><div class="empty-state-icon">🤝</div><div>暂无争议点</div></div>';
+    body.innerHTML = html;
+    return;
+  }
+
+  if (state.disputes.length > 0) {
+    html += '<div class="topic-group-label">进行中争议 <span class="count">'+state.disputes.length+'</span></div>';
+    state.disputes.forEach(d => {
+      html += renderDisputeCard(d);
+    });
+  }
+  if (state.resolvedDisputes.length > 0) {
+    html += '<div class="topic-group-label">已解决争议 <span class="count">'+state.resolvedDisputes.length+'</span></div>';
+    state.resolvedDisputes.forEach(d => {
+      html += renderDisputeCard(d, true);
+    });
+  }
+  body.innerHTML = html;
+}
+
+function renderDisputeCard(d, resolved=false) {
+  const uniqueSpeakers = [...new Set(d.sides.map(s=>s.speaker))];
+  const sidesHtml = d.sides.slice(0,4).map((s,i) => `<div class="stance-card"><span class="stance-label">立场 ${String.fromCharCode(65+i)} · ${s.speaker}</span>${summarizeSpeech(s.content,58)}</div>`).join('');
+  const firstTime = d.startedAt || state.transcripts.find(t=>d.transcriptIds?.includes(t.id))?.time || '刚刚';
+  return `
+    <article class="live-dispute-card ${resolved?'resolved':''}">
+      <div class="live-dispute-top">
+        <i class="dispute-live-dot"></i><span class="live-dispute-state">${resolved?'已形成决议':'争议进行中'}</span>
+        <span class="live-dispute-time">开始于 ${firstTime}</span>
+      </div>
+      <div class="live-dispute-main">
+        <div class="live-dispute-title">${d.topic}</div>
+        <div class="live-dispute-ai">AI 判断：${uniqueSpeakers.join('、')}围绕“${d.topic}”存在不同判断，建议主持人明确决策原则或指定后续负责人。</div>
+        <div class="stance-grid">${sidesHtml}</div>
+        <div class="live-dispute-meta"><span>👥 ${uniqueSpeakers.length} 位发言人</span><span>💬 ${d.transcriptIds?.length||d.sides.length} 段相关原文</span><span>◷ 持续跟踪中</span></div>
+        ${resolved?`<div class="live-dispute-resolution"><b>最终决议：</b>${d.resolution || '已达成一致意见'}${d.resolvedAt?` · ${d.resolvedAt}`:''}</div>`:''}
+      </div>
+      <div class="live-dispute-actions">
+        ${d.transcriptIds?.[0]?`<button class="dispute-action-link" onclick="locateTranscript('${d.transcriptIds[0]}')">❞ 查看讨论上下文</button>`:''}
+        ${!resolved?`<button class="dispute-action-primary" onclick="showResolveDisputeModal('${d.id}')">推动收敛</button>`:'<span style="margin-left:auto;color:var(--success);font-size:11px">✓ 已归入会议决议</span>'}
+      </div>
+    </article>
+  `;
+}
+
+function showResolveDisputeModal(disputeId) {
+  const d = state.disputes.find(x=>x.id===disputeId);
+  if (!d) return;
+  openModal('推动争议收敛', `
+    <div style="padding:10px 12px;background:var(--danger-light);border-radius:8px;margin-bottom:14px"><b>${d.topic}</b><div style="font-size:12px;color:var(--text-2);margin-top:4px">请记录本次争议的处理方式和最终决议，内容将进入会后纪要。</div></div>
+    <div class="form-group"><label class="form-label">处理方式</label><div class="resolution-options">
+      <label class="resolution-option"><input type="radio" name="resolutionType" value="现场达成一致" checked> 现场达成一致</label>
+      <label class="resolution-option"><input type="radio" name="resolutionType" value="负责人裁决"> 负责人裁决</label>
+      <label class="resolution-option"><input type="radio" name="resolutionType" value="转为待确认"> 转为待确认</label>
+    </div></div>
+    <div class="form-group"><label class="form-label">最终决议</label><textarea class="form-input" id="resolutionText" rows="4" placeholder="例如：V2.3 先采用有限模板方案，自定义拖拽延后至 V2.4。"></textarea></div>
+    <div style="font-size:11px;color:var(--text-3)">保存后，争议卡会转为已收敛状态，并保留双方立场和原文链接。</div>
+  `, `<button class="modal-btn" onclick="closeModal()">取消</button><button class="modal-btn primary" onclick="confirmDisputeResolution('${disputeId}')">确认决议</button>`);
+  setTimeout(()=>$('resolutionText')?.focus(),50);
+}
+
+function confirmDisputeResolution(disputeId) {
+  const idx = state.disputes.findIndex(x=>x.id===disputeId);
+  if (idx<0) return;
+  const text = $('resolutionText')?.value.trim();
+  if (!text) { toast('请填写最终决议', 'warning'); return; }
+  const type = document.querySelector('input[name="resolutionType"]:checked')?.value || '现场达成一致';
+  const d = state.disputes[idx];
+  d.status='resolved'; d.resolution=text; d.resolutionType=type; d.resolvedAt=fmtTime(state.elapsedSeconds);
+  state.disputes.splice(idx,1); state.resolvedDisputes.push(d);
+  logChange(`争议已收敛：${d.topic}；决议：${text}`);
+  closeModal(); renderSidePanel(); toast('争议已收敛并写入会议决议','success');
+}
+
+function locateTranscript(id) {
+  switchView('meeting');
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior:'smooth', block:'center' });
+      const content = el.querySelector('.transcript-content');
+      if (content) {
+        content.classList.add('highlight');
+        setTimeout(() => content.classList.remove('highlight'), 3000);
+      }
+    }
+  }, 100);
+}
+
+/* ========== 十、发言人修正 ========== */
+function showSpeakerFixModal() {
+  const scene = SCENES[state.currentScene];
+  const options = scene.attendees.map(a => `<option value="${a.id}">${a.name}（${a.dept}）</option>`).join('');
+  openModal('修正未知发言人', `
+    <div class="form-group">
+      <label class="form-label">检测到 ${state.pendingUnknownCount} 条未知发言人记录，请选择正确的发言人：</label>
+      <select class="form-select" id="fixSpeakerSelect">
+        <option value="">请选择发言人</option>
+        ${options}
+      </select>
+    </div>
+    <div style="font-size:12px;color:var(--text-3);margin-top:8px;">
+      💡 确认后将批量追溯更新本场所有未知发言人的历史发言
+    </div>
+  `, `
+    <button class="modal-btn" onclick="closeModal()">取消</button>
+    <button class="modal-btn primary" onclick="confirmSpeakerFix()">确认修正</button>
+  `);
+}
+
+function confirmSpeakerFix() {
+  const select = $('fixSpeakerSelect');
+  const speakerId = select.value;
+  if (!speakerId) { toast('请选择发言人', 'warning'); return; }
+  const speaker = getSpeaker(speakerId);
+  let count = 0;
+  state.transcripts.forEach(t => {
+    if (t.speakerUnknown) {
+      t.speaker = speakerId;
+      t.speakerName = speaker.name;
+      t.speakerDept = speaker.dept;
+      t.speakerUnknown = false;
+      count++;
+    }
+  });
+  state.pendingUnknownCount = 0;
+  $('pendingBubble').style.display = 'none';
+  logChange(`批量修正 ${count} 条未知发言人为：${speaker.name}`);
+  closeModal();
+  renderAllTranscripts();
+  renderSidePanel();
+  toast(`已批量修正 ${count} 条发言人为 ${speaker.name}`, 'success');
+}
+
+function simulateUnknownSpeaker() {
+  const scene = SCENES[state.currentScene];
+  // 找一条还没播放的发言，或者直接插入一条未知发言
+  const item = {
+    speaker: 'unknown',
+    time: fmtTime(state.elapsedSeconds),
+    text: '我补充一点，关于这个方案的落地时间，我们部门需要再内部评估一下。',
+    agenda: state.topics.find(t=>t.active)?.agendaId || null,
+    unknown: true,
+  };
+  addTranscript(item);
+  toast('已模拟未知发言人场景，点击顶部气泡可修正', 'warning');
+}
+
+/* ========== 十一、结束会议 & 纪要生成 ========== */
+function endMeeting() {
+  if (state.meetingEnded) { toast('会议已结束', 'info'); return; }
+  if (state.transcripts.length < 3 && !state.realRecordingSession && !state.forceFullMinutes) {
+    // 非有效会议
+    state.invalidMeeting = true;
+  }
+  state.meetingEnded = true;
+  stopTimer();
+  stopAutoPlay();
+  $('transcriptStatus').textContent = '会议已结束，正在生成纪要...';
+
+  // 显示生成进度
+  switchView('minutes');
+  $('genOverlay').classList.add('active');
+  let progress = 0;
+  const bar = $('genProgressBar');
+  const text = $('genText');
+  const steps = ['正在分析会议内容...', '提取核心议题与观点...', '识别争议与待办事项...', '生成结构化纪要...', '纪要生成完成！'];
+  let stepIdx = 0;
+  const interval = setInterval(() => {
+    progress += Math.random() * 15 + 5;
+    if (progress > 100) progress = 100;
+    bar.style.width = progress + '%';
+    const newStepIdx = Math.min(Math.floor(progress / 20), steps.length - 1);
+    if (newStepIdx !== stepIdx) { stepIdx = newStepIdx; text.textContent = steps[stepIdx]; }
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        $('genOverlay').classList.remove('active');
+        state.minutesGenerated = true;
+        renderMinutes();
+        $('minutesFooter').style.display = 'flex';
+        toast('会议纪要已生成', 'success', 4000);
+      }, 500);
+    }
+  }, 200);
+}
+
+function renderMinutes() {
+  const scene = state.generatedScene || SCENES[state.currentScene];
+  syncPendingTasks(scene);
+  $('minutesTitle').textContent = scene.name + ' - 会议纪要';
+  $('minutesDate').textContent = scene.date + ' ' + scene.startTime;
+  $('minutesDuration').textContent = scene.duration;
+  $('minutesAttendees').textContent = scene.attendees.length + '人';
+
+  const body = $('minutesBody');
+  let html = '';
+
+  if (state.invalidMeeting) {
+    html += `
+      <div class="invalid-meeting-banner">
+        ⚠️ 本次会议时长不足 5 分钟，判定为非有效会议，仅输出简要摘要。
+      </div>
+      <div class="minutes-section">
+        <div class="minutes-section-title"><span class="section-num">1</span>会议基本信息</div>
+        ${renderInfoGrid(scene)}
+      </div>
+      <div class="minutes-section">
+        <div class="minutes-section-title"><span class="section-num">2</span>发言要点</div>
+        ${state.transcripts.map(t => `<div style="padding:6px 0;font-size:13px;"><strong>${t.speakerName}：</strong>${t.text}</div>`).join('')}
+      </div>
+    `;
+    body.innerHTML = html;
+    return;
+  }
+
+  // 1. 基本信息
+  html += `
+    <div class="minutes-section">
+      <div class="minutes-section-title"><span class="section-num">1</span>会议基本信息</div>
+      ${renderInfoGrid(scene)}
+    </div>
+  `;
+
+  // 2. 议程执行概览
+  html += `
+    <div class="minutes-section">
+      <div class="minutes-section-title"><span class="section-num">2</span>议程执行概览</div>
+      <div class="agenda-overview">
+        ${scene.agenda.map(a => `
+          <div class="agenda-row done">
+            <div class="agenda-status done">✓</div>
+            <div class="agenda-name">${a.name}</div>
+            <div class="agenda-time">已讨论</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  // 每段议程的结构化产出：结论、争议脉络、最终决议均可溯源
+  html += `
+    <div class="minutes-section">
+      <div class="minutes-section-title"><span class="section-num">3</span>议程成果与决策脉络</div>
+      <div class="agenda-structure">
+        ${scene.agenda.map(a => {
+          const records = state.transcripts.filter(t => t.agenda === a.id);
+          const disputes = records.filter(t => t.dispute);
+          const resolution = records.find(t => t.resolve);
+          const conclusion = scene.conclusions.find(c => records.some(t => t.topic === c.topic || t.resolve === c.topic));
+          return `<article class="agenda-structure-card"><h4>${a.name}</h4>
+            <div class="agenda-structure-row"><b>讨论时间</b><span>${records[0]?.time || '—'} - ${records[records.length-1]?.time || '—'}</span></div>
+            <div class="agenda-structure-row"><b>核心结论</b><span>${conclusion?.text || '本段讨论未形成独立结论'} ${conclusion && hasSourceForTopic(conclusion.topic || a.name) ? `<button class="src-btn" onclick="locateByTopic('${conclusion.topic || a.name}')" title="查看原文出处" aria-label="查看原文出处"></button>` : ''}</span></div>
+            ${disputes.length ? `<div class="agenda-structure-row"><b>争议前因</b><span>${disputes.map(x=>`${x.speakerName}：${summarizeSpeech(x.dispute.content)}`).join('；')} ${hasSourceForTopic(disputes[0].dispute.topic) ? `<button class="src-btn" onclick="locateByTopic('${disputes[0].dispute.topic}')" title="查看原文出处" aria-label="查看原文出处"></button>` : ''}</span></div>` : ''}
+            ${disputes.length ? `<div class="agenda-structure-row"><b>分歧点</b><span>${disputes[0].dispute.topic}</span></div>` : ''}
+            ${resolution ? `<div class="agenda-structure-row"><b>最终决议</b><span>${summarizeSpeech(resolution.text)} ${hasSourceForTopic(resolution.resolve) ? `<button class="src-btn" onclick="locateByTopic('${resolution.resolve}')" title="查看原文出处" aria-label="查看原文出处"></button>` : ''}</span></div>` : ''}
+          </article>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  // 3. 核心结论
+  html += `
+    <div class="minutes-section">
+      <div class="minutes-section-title"><span class="section-num">4</span>核心结论</div>
+      ${scene.conclusions.map((c, i) => `
+        <div class="conclusion-card">
+          <div class="conclusion-text">${c.text}</div>
+          <span class="conclusion-confidence confidence-high">高置信</span>
+          <div class="conclusion-actions">${hasSourceForTopic(c.topic) ? `<button class="src-btn" onclick="locateByTopic('${c.topic}')" title="查看原文出处" aria-label="查看原文出处"></button>` : ''}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  // 4. 待确认事项
+  if (scene.pendingItems && scene.pendingItems.length > 0) {
+    html += `
+      <div class="minutes-section">
+        <div class="minutes-section-title"><span class="section-num">5</span>待确认事项</div>
+        ${scene.pendingItems.map((p, i) => `
+          <div class="conclusion-card pending pending-item-card">
+            <div class="pending-item-head"><div class="conclusion-text">${p.text}</div><div class="pending-state-switch"><button class="pending-state-btn confirmed ${p.status==='confirmed'?'active':''}" onclick="setPendingStatus(${i},'confirmed')">已确认</button><button class="pending-state-btn pending ${p.status!=='confirmed'?'active':''}" onclick="setPendingStatus(${i},'pending')">待确认</button></div></div>
+            <div class="pending-context"><b>讨论上下文：</b>${getPendingContext(p)} ${hasSourceForTopic(p.topic || p.text.substring(0,12)) ? `<button class="src-btn" onclick="locateByTopic('${p.topic || p.text.substring(0,12)}')" title="查看完整上下文" aria-label="查看完整上下文"></button>` : ''}</div>
+            ${p.status!=='confirmed'?'<div style="margin-top:7px;font-size:11px;color:var(--warning)">已加入会后任务清单，等待负责人进一步确认。</div>':'<div style="margin-top:7px;font-size:11px;color:var(--success)">该事项已确认，无需继续跟进。</div>'}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // 5. 关键观点摘要
+  html += `
+    <div class="minutes-section">
+      <div class="minutes-section-title"><span class="section-num">6</span>关键观点摘要</div>
+      ${state.topics.filter(t=>t.points.length>0).map(t => `
+        <div style="margin-bottom:16px;">
+          <div style="font-weight:600;font-size:13px;margin-bottom:4px;color:var(--text-1);">${t.title}</div>
+          <div style="padding:8px 10px;margin:6px 0;background:var(--primary-bg);border-radius:6px;font-size:12px;line-height:1.65;"><strong>观点汇总：</strong>${summarizeSpeech(t.points.join('；'),96)}</div>
+          <ul class="topic-points" style="padding-left:4px;">
+            ${t.points.map((p,i) => `<li><strong>${i+1}.</strong> ${p} ${hasSourceForTopic(t.title) ? `<button class="src-btn" onclick="locateByTopic('${t.title}')" title="查看原文出处" aria-label="查看原文出处"></button>` : ''}</li>`).join('')}
+          </ul>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  // 6. 争议点汇总
+  const allDisputes = [...state.resolvedDisputes, ...state.disputes];
+  if (allDisputes.length > 0) {
+    html += `
+      <div class="minutes-section">
+        <div class="minutes-section-title"><span class="section-num">7</span>争议点汇总</div>
+        ${allDisputes.map(d => `
+          <div class="dispute-summary-item ${d.status==='resolved'?'resolved':''}">
+            <div style="font-weight:600;font-size:13px;margin-bottom:6px;">
+              ${d.topic}
+              <span style="font-size:11px;margin-left:8px;color:${d.status==='resolved'?'var(--success)':'var(--danger)'};">
+                ${d.status==='resolved'?'✓ 已收敛':'⏳ 待解决'}
+              </span>
+            </div>
+            ${d.sides.map(s => `<div style="font-size:12px;color:var(--text-2);padding:2px 0;"><strong>${s.speaker}：</strong>${s.content}</div>`).join('')}
+            ${hasSourceForTopic(d.topic) ? `<div style="margin-top:7px"><button class="src-btn" onclick="locateByTopic('${d.topic}')" title="查看争议上下文" aria-label="查看争议上下文"></button><span style="font-size:11px;color:var(--text-3);margin-left:6px">查看争议上下文</span></div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // 7. 待办任务清单
+  html += `
+    <div class="minutes-section">
+      <div class="minutes-section-title"><span class="section-num">8</span>待办任务清单</div>
+      <table class="todo-table">
+        <thead>
+          <tr>
+            <th>序号</th><th>任务描述</th><th>负责人</th><th>截止时间</th>
+            <th>优先级</th><th>关联议题</th><th>状态</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="todoTableBody">
+          ${renderTodoRows(scene.todos)}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  // 8. 附录原文溯源
+  html += `
+    <div class="minutes-section">
+      <div class="minutes-section-title"><span class="section-num">9</span>附录：全文转写</div>
+      <div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:12px;">
+        ${state.transcripts.map(t => `
+          <div id="src_${t.id}" style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border-light);">
+            <span style="font-size:11px;color:var(--text-3);">${t.time}</span>
+            <strong style="font-size:12px;color:var(--primary);margin-left:8px;">${t.speakerName}</strong>
+            <div style="font-size:13px;color:var(--text-2);margin-top:2px;padding-left:56px;">${t.text}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  // 9. 修改日志
+  if (state.changeLog.length > 0) {
+    html += `
+      <div class="minutes-section">
+        <div class="minutes-section-title"><span class="section-num">10</span>修改日志</div>
+        <div class="change-log">
+          ${state.changeLog.map(c => `<div class="change-log-item"><span class="change-log-time">${c.time}</span><span>${c.action}</span></div>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  body.innerHTML = html;
+  setupMinutesAnchors();
+}
+
+function renderInfoGrid(scene) {
+  return `
+    <div class="info-grid">
+      <div class="info-item"><div class="info-label">会议主题</div><div class="info-value">${scene.name}</div></div>
+      <div class="info-item"><div class="info-label">会议时间</div><div class="info-value">${scene.date} ${scene.startTime}</div></div>
+      <div class="info-item"><div class="info-label">会议时长</div><div class="info-value">${scene.duration}</div></div>
+      <div class="info-item"><div class="info-label">会议地点</div><div class="info-value">${scene.location}</div></div>
+      <div class="info-item"><div class="info-label">主持人</div><div class="info-value">${scene.attendees[0].name}</div></div>
+      <div class="info-item"><div class="info-label">参会人数</div><div class="info-value">${scene.attendees.length} 人</div></div>
+      <div class="info-item"><div class="info-label">转写准确率</div><div class="info-value">97.3%</div></div>
+      <div class="info-item"><div class="info-label">纪要生成</div><div class="info-value">AI 自动生成</div></div>
+    </div>
+    <div style="margin-top:12px;font-size:13px;">
+      <strong style="color:var(--text-2);">参会人员：</strong>
+      ${scene.attendees.map(a => `${a.name}（${a.dept}·${a.role}）`).join('、')}
+    </div>
+  `;
+}
+
+function renderTodoRows(todos) {
+  return todos.map((t, i) => {
+    const priorityClass = t.priority === 'high' ? 'priority-high' : t.priority === 'mid' ? 'priority-mid' : 'priority-low';
+    const priorityText = t.priority === 'high' ? '高' : t.priority === 'mid' ? '中' : '低';
+    const statusClass = 'status-' + t.status;
+    const statusText = t.status === 'todo' ? '待开始' : t.status === 'doing' ? '进行中' : t.status === 'done' ? '已完成' : '已逾期';
+    const ownerDisplay = t.owner ? t.owner : '<span class="task-missing">待指派</span>';
+    const deadlineDisplay = t.deadline ? t.deadline : '<span class="task-missing">待设置</span>';
+    const weakClass = t.strong ? '' : 'weak-task';
+    const noteHtml = t.note ? `<div style="font-size:11px;color:var(--warning);margin-top:2px;">⚠️ ${t.note}</div>` : '';
+    return `
+      <tr class="${weakClass}" data-idx="${i}">
+        <td>${i+1}</td>
+        <td class="task-desc">${t.desc}${noteHtml}</td>
+        <td>${ownerDisplay}</td>
+        <td>${deadlineDisplay}</td>
+        <td><span class="priority-tag ${priorityClass}">${priorityText}</span></td>
+        <td style="font-size:12px;color:var(--text-3);">${t.topic||'-'}</td>
+        <td><span class="status-tag ${statusClass}">${statusText}</span></td>
+        <td>${hasSourceForTopic(t.topic) ? `<button class="src-btn" onclick="locateByTopic('${t.topic}')" title="查看原文出处" aria-label="查看原文出处"></button>` : '-'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function findSourceIndex(topic) {
+  const agendaId = state.generatedScene?.agenda?.find(a=>a.name===topic)?.id;
+  return state.transcripts.findIndex(t => t.text.includes(topic?.substring(0,4)) || t.topic === topic || t.agenda === agendaId || t.resolve === topic || t.dispute?.topic === topic);
+}
+function hasSourceForTopic(topic) { return !!topic && findSourceIndex(topic) >= 0; }
+function locateByTopic(topic) {
+  const index = findSourceIndex(topic);
+  if (index < 0) { toast('未找到对应原文片段', 'info'); return; }
+  setupSourcePane();
+  renderSourcePane(index);
+  toast(`已定位右侧原文：${topic}`, 'success', 1800);
+}
+
+function showTranscriptContext(index) {
+  if (index < 0 || index >= state.transcripts.length) return;
+  const start = Math.max(0, index - 2);
+  const records = state.transcripts.slice(start, Math.min(state.transcripts.length, index + 3));
+  const selected = state.transcripts[index];
+  openModal(`原文上下文 · ${selected.topic || selected.time}`, `
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">以下展示该结论、争议或决议形成前后的连续会议讨论。蓝色区域为 AI 关联的原文出处。</div>
+    <div style="border-left:2px solid var(--border);padding-left:14px;max-height:54vh;overflow-y:auto;">
+      ${records.map((t, i) => `<article style="padding:12px 14px;margin:8px 0;border-radius:8px;${i === index-start ? 'background:#e8edff;border:1px solid #c7d2fe;' : 'background:#fafbfc;border:1px solid transparent;'}"><div style="font-size:12px;color:var(--text-3);"><strong style="color:var(--primary);">${t.speakerName}</strong> · ${t.time}${t.topic ? ` · ${t.topic}` : ''}</div><div style="font-size:14px;color:var(--text-1);line-height:1.75;margin-top:5px;">${t.text}</div></article>`).join('')}
+    </div>
+    <div style="margin-top:12px;color:var(--text-3);font-size:12px;">可据此核验纪要结论、待确认事项、争议点及任务来源。</div>
+  `, '<button class="modal-btn" onclick="closeModal()">关闭</button><button class="modal-btn primary" onclick="closeModal();toast(\'已复制关联原文\',\'success\')">复制原文</button>');
+}
+
+function getPendingContext(item) {
+  const key=item.topic||item.text.substring(0,12), index=findSourceIndex(key);
+  if(index<0)return '未匹配到具体转写上下文。';
+  const current=state.transcripts[index], previous=state.transcripts[index-1];
+  const before=previous?`此前 ${previous.speakerName} 提到“${summarizeSpeech(previous.text,38)}”；`:'';
+  return `${before}${current.speakerName} 在 ${current.time} 表示“${summarizeSpeech(current.text,56)}”。`;
+}
+function syncPendingTasks(scene) {
+  if(!scene.pendingItems) return;
+  scene.pendingItems.forEach((item,index)=>{
+    if(!item.status)item.status='pending';
+    const taskIndex=scene.todos.findIndex(t=>t.sourcePendingIndex===index);
+    if(item.status==='pending'&&taskIndex<0)scene.todos.push({desc:`确认事项：${item.text}`,owner:'待指派',deadline:'待确认',priority:'mid',topic:item.topic||'待确认事项',status:'todo',strong:true,sourcePendingIndex:index});
+    if(item.status==='confirmed'&&taskIndex>=0)scene.todos.splice(taskIndex,1);
+  });
+}
+function setPendingStatus(index,status) {
+  const scene=state.generatedScene||SCENES[state.currentScene], item=scene.pendingItems?.[index];
+  if(!item)return;
+  item.status=status; syncPendingTasks(scene);
+  logChange(`${status==='confirmed'?'已确认':'待确认'}事项：${item.text.substring(0,24)}`);
+  renderMinutes();
+  toast(status==='confirmed'?'事项已确认，已从会后任务中移除':'事项保持待确认，已加入会后任务清单',status==='confirmed'?'success':'warning');
+}
+function approvePending(idx){setPendingStatus(idx,'confirmed')}
+
+function togglePermission() {
+  state.permissionHostOnly = !state.permissionHostOnly;
+  $('permSwitch').classList.toggle('on', state.permissionHostOnly);
+  toast(state.permissionHostOnly ? '已切换为仅主持人可编辑' : '已切换为全员可编辑', 'info');
+}
+
+/* ========== 十二、分享 & 导出 ========== */
+function showShareModal() {
+  openModal('生成分享链接', `
+    <div class="form-group">
+      <label class="form-label">权限设置</label>
+      <div class="radio-group">
+        <label class="radio-item"><input type="radio" name="sharePerm" value="view" checked> 仅查看</label>
+        <label class="radio-item"><input type="radio" name="sharePerm" value="edit"> 可编辑</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="radio-item"><input type="checkbox" id="shareFull" checked> 附带全文转写</label>
+    </div>
+    <div class="form-group">
+      <label class="form-label">分享链接</label>
+      <div style="display:flex;gap:8px;">
+        <input class="form-input" id="shareLink" readonly value="https://meeting.ai/share/m_${Date.now().toString(36)}" style="flex:1;">
+        <button class="footer-btn primary" onclick="copyShareLink()">复制</button>
+      </div>
+    </div>
+  `, `
+    <button class="modal-btn primary" onclick="closeModal()">完成</button>
+  `);
+}
+
+function copyShareLink() {
+  const input = $('shareLink');
+  input.select();
+  document.execCommand('copy');
+  toast('链接已复制到剪贴板', 'success');
+}
+
+function showExportModal() {
+  openModal('导出纪要', `
+    <div class="form-group">
+      <label class="form-label">导出格式</label>
+      <div class="radio-group">
+        <label class="radio-item"><input type="radio" name="exportFmt" value="word" checked> Word (.docx)</label>
+        <label class="radio-item"><input type="radio" name="exportFmt" value="pdf"> PDF (.pdf)</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">导出范围</label>
+      <div class="radio-group">
+        <label class="radio-item"><input type="radio" name="exportRange" value="summary" checked> 仅结构化纪要</label>
+        <label class="radio-item"><input type="radio" name="exportRange" value="full"> 纪要 + 全文转写</label>
+      </div>
+    </div>
+  `, `
+    <button class="modal-btn" onclick="closeModal()">取消</button>
+    <button class="modal-btn primary" onclick="doExport()">确认导出</button>
+  `);
+}
+
+function doExport() {
+  const fmt = document.querySelector('input[name="exportFmt"]:checked').value;
+  const range = document.querySelector('input[name="exportRange"]:checked').value;
+  closeModal();
+  toast(`正在导出 ${fmt.toUpperCase()} 文件（${range==='summary'?'仅纪要':'含全文'}）...`, 'info');
+  setTimeout(() => {
+    toast(`${fmt.toUpperCase()} 文件已生成，开始下载`, 'success');
+  }, 1500);
+}
+
+/* ========== 十三、协作工具同步 ========== */
+function showSyncModal() {
+  const scene = SCENES[state.currentScene];
+  const todoCount = scene.todos.length;
+  openModal('同步至协作工具', `
+    <div class="form-group">
+      <label class="form-label">选择目标平台（可多选）</label>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <label class="radio-item"><input type="checkbox" class="sync-platform" value="feishu" checked> 飞书项目</label>
+        <label class="radio-item"><input type="checkbox" class="sync-platform" value="jira"> Jira</label>
+        <label class="radio-item"><input type="checkbox" class="sync-platform" value="teambition"> Teambition</label>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text-3);padding:10px;background:var(--bg-page);border-radius:6px;">
+      将同步 ${todoCount} 条待办任务。V1.0 支持单向推送任务字段，任务状态支持双向回传。非标状态统一归入「进行中」。
+    </div>
+    <div id="syncResultArea"></div>
+  `, `
+    <button class="modal-btn" onclick="closeModal()">取消</button>
+    <button class="modal-btn primary" onclick="doSync()">一键同步</button>
+  `);
+}
+
+function doSync() {
+  const platforms = Array.from(document.querySelectorAll('.sync-platform:checked')).map(c => c.value);
+  if (platforms.length === 0) { toast('请至少选择一个平台', 'warning'); return; }
+  const scene = SCENES[state.currentScene];
+  const total = scene.todos.length;
+  const area = $('syncResultArea');
+  area.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-3);">正在同步...</div>';
+
+  setTimeout(() => {
+    const success = total - Math.floor(Math.random() * 2);
+    const fail = total - success;
+    platforms.forEach(p => { state.syncedPlatforms[p] = true; });
+    area.innerHTML = `
+      <div class="sync-result">
+        <div class="sync-result-item">
+          <div class="sync-result-num success">${success}</div>
+          <div class="sync-result-label">同步成功</div>
+        </div>
+        <div class="sync-result-item">
+          <div class="sync-result-num fail">${fail}</div>
+          <div class="sync-result-label">同步失败</div>
+        </div>
+        <div class="sync-result-item">
+          <div class="sync-result-num" style="color:var(--primary);">${platforms.length}</div>
+          <div class="sync-result-label">目标平台</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button class="footer-btn" onclick="simulateStatusCallback()">模拟状态回传</button>
+        <button class="footer-btn" onclick="showCollabMock()">查看协作工具详情</button>
+      </div>
+    `;
+    logChange(`同步待办至 ${platforms.join('、')}：成功${success}条，失败${fail}条`);
+    toast(`同步完成：成功 ${success} 条，失败 ${fail} 条`, fail > 0 ? 'warning' : 'success');
+  }, 1500);
+}
+
+function simulateStatusCallback() {
+  const scene = SCENES[state.currentScene];
+  // 随机改变一个任务的状态
+  const todo = scene.todos[Math.floor(Math.random() * scene.todos.length)];
+  const statuses = ['doing', 'done', 'overdue'];
+  const newStatus = statuses[Math.floor(Math.random() * statuses.length)];
+  const oldStatus = todo.status;
+  todo.status = newStatus;
+  const statusText = { doing:'进行中', done:'已完成', overdue:'已逾期' };
+  logChange(`协作工具状态回传：${todo.desc.substring(0,15)}... ${oldStatus}→${newStatus}`);
+  renderMinutes();
+  toast(`协作工具状态回传：任务「${todo.desc.substring(0,10)}...」已更新为${statusText[newStatus]}`, 'info', 4000);
+
+  // 逾期提醒
+  if (newStatus === 'overdue') {
+    setTimeout(() => {
+      toast(`⏰ 逾期提醒：任务「${todo.desc.substring(0,15)}...」已超过截止时间`, 'danger', 5000);
+    }, 1000);
+  }
+}
+
+function showCollabMock() {
+  const scene = SCENES[state.currentScene];
+  const todo = scene.todos[0];
+  openModal('飞书项目 - 任务详情（模拟）', `
+    <div class="collab-mock">
+      <div class="collab-mock-header">📋 飞书项目 / 任务详情</div>
+      <div class="collab-mock-body">
+        <div class="field"><span class="field-label">任务名称</span><span>${todo.desc}</span></div>
+        <div class="field"><span class="field-label">负责人</span><span>${todo.owner}</span></div>
+        <div class="field"><span class="field-label">截止时间</span><span>${todo.deadline || '未设置'}</span></div>
+        <div class="field"><span class="field-label">优先级</span><span>${todo.priority==='high'?'高':todo.priority==='mid'?'中':'低'}</span></div>
+        <div class="field"><span class="field-label">当前状态</span><span style="color:var(--primary);">${todo.status==='todo'?'待开始':todo.status==='doing'?'进行中':todo.status==='done'?'已完成':'已逾期'}</span></div>
+        <div class="field"><span class="field-label">关联议题</span><span>${todo.topic || '-'}</span></div>
+        <div class="field"><span class="field-label">来源</span><span>AI 会议助手自动同步</span></div>
+      </div>
+    </div>
+  `, `<button class="modal-btn primary" onclick="closeModal()">关闭</button>`);
+}
+
+/* ========== 十四、弹窗控制 ========== */
+function openModal(title, bodyHtml, footerHtml) {
+  $('modalTitle').textContent = title;
+  $('modalBody').innerHTML = bodyHtml;
+  $('modalFooter').innerHTML = footerHtml || '';
+  $('modalMask').classList.add('active');
+}
+function closeModal() {
+  $('modalMask').classList.remove('active');
+}
+$('modalMask').addEventListener('click', (e) => {
+  if (e.target === $('modalMask')) closeModal();
+});
+
+/* ========== 十五、价值提示 ========== */
+function showValueTip(title, text, anchorEl) {
+  // 移除已存在的
+  document.querySelectorAll('.value-tip').forEach(t => t.remove());
+  const tip = document.createElement('div');
+  tip.className = 'value-tip';
+  tip.innerHTML = `
+    <span class="value-tip-close" onclick="this.parentElement.remove()">✕</span>
+    <div class="value-tip-title">${title}</div>
+    <div>${text}</div>
+  `;
+  document.body.appendChild(tip);
+  if (anchorEl) {
+    const rect = anchorEl.getBoundingClientRect();
+    tip.style.left = rect.left + 'px';
+    tip.style.top = (rect.top - tip.offsetHeight - 12) + 'px';
+  } else {
+    tip.style.left = '50%';
+    tip.style.top = '120px';
+    tip.style.transform = 'translateX(-50%)';
+  }
+  setTimeout(() => tip.remove(), 6000);
+}
+
+/* ========== 十六、演示模式 ========== */
+function setDemoMode(mode) {
+  state.demoMode = mode;
+  document.querySelectorAll('.demo-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  if (mode === 'auto') {
+    startAutoPlay();
+  } else {
+    stopAutoPlay();
+  }
+}
+
+function startAutoPlay() {
+  stopAutoPlay();
+  state.autoPlayStep = 0;
+  $('autoProgress').style.display = 'block';
+  $('autoProgress').style.width = '0%';
+  toast('自动播放已启动，将按业务流程自动推进', 'info', 3000);
+  autoPlayNext();
+}
+
+function stopAutoPlay() {
+  if (state.autoPlayTimer) { clearTimeout(state.autoPlayTimer); state.autoPlayTimer = null; }
+  $('autoProgress').style.display = 'none';
+}
+
+function autoPlayNext() {
+  const scene = SCENES[state.currentScene];
+  const total = scene.transcripts.length + 4; // 转写 + 结束 + 纪要操作
+  state.autoPlayStep++;
+  const progress = Math.min((state.autoPlayStep / total) * 100, 100);
+  $('autoProgress').style.width = progress + '%';
+
+  if (state.autoPlayStep <= scene.transcripts.length) {
+    nextTranscript();
+    // 在特定步骤展示价值提示
+    if (state.autoPlayStep === 1) {
+      showValueTip('实时音文转写', '毫秒级逐字上屏，自动分离发言人，中英文混合术语精准识别。解决传统会议记录靠手写、易遗漏的痛点。', document.querySelector('.transcript-panel'));
+    } else if (state.autoPlayStep === 3 && state.disputes.length > 0) {
+      showValueTip('争议自动标记', 'AI 识别到对立立场时自动高亮转写片段并归集到争议面板，主持人可一键标记解决。', document.querySelector('.side-panel'));
+    }
+    state.autoPlayTimer = setTimeout(autoPlayNext, 2500);
+  } else if (state.autoPlayStep === scene.transcripts.length + 1) {
+    showValueTip('结束会议', '点击结束会议后，AI 将在 30 秒内生成结构化纪要，高置信内容归入核心结论，低置信内容标注待核实。', document.querySelector('.transcript-footer'));
+    state.autoPlayTimer = setTimeout(() => { endMeeting(); autoPlayNext(); }, 2000);
+  } else if (state.autoPlayStep === scene.transcripts.length + 2) {
+    showValueTip('智能纪要', '严格遵循 PRD 模板：基本信息→议程概览→核心结论→待确认→观点摘要→争议汇总→待办清单→原文溯源→AI声明。', document.querySelector('.minutes-body'));
+    state.autoPlayTimer = setTimeout(autoPlayNext, 4000);
+  } else if (state.autoPlayStep === scene.transcripts.length + 3) {
+    showValueTip('待办闭环', 'AI 自动提取待办，强触发正常展示、弱触发灰色标识、重复合并、已拒绝不提取。支持一键同步飞书/Jira/Teambition。', document.querySelector('.todo-table'));
+    state.autoPlayTimer = setTimeout(() => {
+      showSyncModal();
+      setTimeout(() => doSync(), 1000);
+      autoPlayNext();
+    }, 3000);
+  } else {
+    toast('自动播放演示完成', 'success', 4000);
+    $('autoProgress').style.width = '100%';
+    setTimeout(() => { $('autoProgress').style.display = 'none'; }, 2000);
+  }
+}
+
+/* ========== 十七、统一渲染 ========== */
+function renderAll() {
+  renderAllTranscripts();
+  renderSidePanel();
+}
+
+/* ========== 十八、键盘快捷键 ========== */
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+  if (e.code === 'Space' && state.currentView === 'meeting' && !state.meetingEnded) {
+    e.preventDefault();
+    nextTranscript();
+  }
+  if (e.code === 'Escape') closeModal();
+});
+
+// 初始化
+console.log('AI 实时会议助手 Demo 已加载完成');
+
+
+
+</script>
+</body>
+</html>
