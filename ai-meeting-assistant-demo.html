@@ -595,11 +595,7 @@ function commitLiveTranscript(rawText,asrAlternatives=[],speakerNo=null) {
     resolve:analysis.resolve,
   });
   $('speakerSwitchBtn').textContent = `说话人${state.activeSpeakerNo} ▾`;
-  if(hasLlmService()){
-    const job=requestModelEnhancement(item);
-    state.aiJobs.push(job);
-    job.finally(()=>{state.aiJobs=state.aiJobs.filter(x=>x!==job)});
-  }
+  // 文本大模型只在会议结束后调用，避免会中逐段请求影响实时 ASR 稳定性。
 }
 
 function correctTranscriptLocally(text='') {
@@ -686,7 +682,7 @@ function showAIConfigModal() {
   openModal('连接大模型', `
     <div class="form-group"><label class="form-label">模型服务</label><select class="form-input" id="aiProviderInput" onchange="applyProviderPreset()"><option value="asr">仅使用豆包 ASR（推荐）</option><option value="deepseek">DeepSeek</option><option value="doubao">豆包 / 火山方舟</option><option value="compatible">其他兼容服务</option></select></div>
     <div class="form-group"><label class="form-label">安全代理服务地址</label><input class="form-input" id="aiEndpointInput" placeholder="例如：https://your-worker.workers.dev"></div>
-    <div class="form-group"><label class="form-label">模型名称</label><input class="form-input" id="aiModelInput" placeholder="DeepSeek 模型名或豆包推理接入点 ID"></div>
+    <div class="form-group"><label class="form-label">模型名称</label><input class="form-input" id="aiModelInput" placeholder="例如：doubao-seed-2-0-lite-260215"></div>
     <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;color:var(--text-2)"><input type="checkbox" id="llmEnabledInput"> 启用文本大模型润色和会后纪要（需另行配置 LLM 密钥）</label>
     <div class="form-group"><label class="form-label">会议术语词表</label><textarea class="form-input" id="aiGlossaryInput" rows="3" placeholder="每行一个，例如：\nV2.3\nTeambition\n张晓明\nRAG 检索增强生成"></textarea><div style="font-size:11px;color:var(--text-3);margin-top:5px">建议填写参会人姓名、产品名、项目代号、英文缩写和专业术语。</div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div style="padding:9px;background:var(--success-light);border-radius:7px;color:#237804">✓ 实时 ASR 润色</div><div style="padding:9px;background:var(--success-light);border-radius:7px;color:#237804">✓ 会后结构化纪要</div></div>
@@ -698,7 +694,7 @@ function applyProviderPreset() {
   const provider=$('aiProviderInput')?.value,model=$('aiModelInput');
   if(!model)return;
   if(provider==='deepseek')model.value='deepseek-v4-flash';
-  if(provider==='doubao')model.value='请填写方舟推理接入点 ID';
+  if(provider==='doubao')model.value='';
   if(provider==='compatible'||provider==='asr')model.value='';
 }
 function saveAIConfig() {
@@ -708,6 +704,7 @@ function saveAIConfig() {
   const glossary=$('aiGlossaryInput')?.value.trim()||'';
   const llmEnabled=!!$('llmEnabledInput')?.checked;
   if(endpoint && !/^https?:\/\//.test(endpoint)){toast('请输入以 http:// 或 https:// 开头的服务地址','warning');return;}
+  if(llmEnabled&&provider!=='asr'&&(!model||model.startsWith('请填写'))){toast('启用文本大模型时必须填写真实模型名称','warning');return;}
   state.aiEndpoint=endpoint;
   state.aiProvider=provider;state.aiModel=model;state.aiGlossary=glossary;state.llmEnabled=llmEnabled;
   try{if(endpoint){localStorage.setItem('meetingAiEndpoint',endpoint);localStorage.setItem('meetingAiProvider',provider);localStorage.setItem('meetingAiModel',model);localStorage.setItem('meetingAiGlossary',glossary);localStorage.setItem('meetingLlmEnabled',String(llmEnabled))}else{localStorage.removeItem('meetingAiEndpoint')}}catch{}
@@ -725,6 +722,14 @@ function parseProviderPayload(data) {
   }
   return value||{};
 }
+async function modelHttpError(response) {
+  let detail='';
+  try {
+    const raw=await response.text(),data=JSON.parse(raw);
+    detail=data?.error?.message||data?.error||data?.message||raw;
+  } catch { detail=response.statusText||'未知错误'; }
+  return new Error(`HTTP ${response.status}${detail?`：${String(detail).slice(0,180)}`:''}`);
+}
 async function requestModelEnhancement(item) {
   if(!hasLlmService()||!item)return;
   const requestId=++state.aiRequestId;
@@ -741,7 +746,7 @@ async function requestModelEnhancement(item) {
       responseSchema:{correctedText:'string',speakerNumber:'number|null',topicTitle:'string',topicSummary:'string',dispute:{title:'string',summary:'string'} }
     })});
     clearTimeout(timeout);
-    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    if(!response.ok)throw await modelHttpError(response);
     const data=parseProviderPayload(await response.json());
     applyModelEnhancement(item,data);
   } catch(error) {
@@ -796,7 +801,7 @@ async function requestFinalTranscriptRevision() {
       responseSchema:{segments:[{index:'number',correctedText:'string',changedTerms:[{from:'string',to:'string'}]}]}
     })});
     clearTimeout(timeout);
-    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    if(!response.ok)throw await modelHttpError(response);
     const result=parseProviderPayload(await response.json()),revisions=Array.isArray(result.segments)?result.segments:[];
     let changed=0;
     revisions.forEach(r=>{const index=Number(r.index),text=String(r.correctedText||'').trim();if(Number.isInteger(index)&&state.transcripts[index]&&text&&text!==state.transcripts[index].text){state.transcripts[index].text=correctTranscriptLocally(text);changed++}});
@@ -804,7 +809,7 @@ async function requestFinalTranscriptRevision() {
     return true;
   } catch(error) {
     console.warn('整场转写终审失败，保留实时校对结果',error);
-    toast('整场转写终审失败，已保留实时校对结果','warning',3200);
+    toast(`整场转写终审失败：${error.message}`,'warning',5200);
     return false;
   } finally {
     clearTimeout(timeout);state.aiAnalyzing=false;updateAIEnhanceBadge();
@@ -823,11 +828,11 @@ async function requestModelMinutesGeneration() {
       responseSchema:{agenda:[{name:'string',summary:'string',keyPoints:[{text:'string',sourceIndex:'number',sourceQuote:'string'}],sourceIndexes:['number']}],conclusions:[{text:'string',topic:'string',sourceIndex:'number',sourceQuote:'string'}],pendingItems:[{text:'string',topic:'string',sourceIndex:'number',sourceQuote:'string'}],disputes:[{topic:'string',context:'string',sides:[{speaker:'string',content:'string'}],resolution:'string',status:'open|resolved',sourceIndexes:['number'],sourceQuote:'string'}],todos:[{desc:'string',owner:'string',deadline:'string',priority:'P0|P1|P2',topic:'string',sourceIndex:'number',sourceQuote:'string'}]}
     })});
     clearTimeout(timeout);
-    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    if(!response.ok)throw await modelHttpError(response);
     return parseProviderPayload(await response.json());
   } catch(error) {
     console.warn('大模型纪要生成失败，使用本地结构化结果',error);
-    toast('大模型纪要生成失败，已自动使用本地结果','warning',3500);
+    toast(`大模型纪要生成失败：${error.message}`,'warning',5200);
     return null;
   } finally {
     clearTimeout(timeout);state.aiAnalyzing=false;updateAIEnhanceBadge();
