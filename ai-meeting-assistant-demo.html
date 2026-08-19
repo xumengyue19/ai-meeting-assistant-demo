@@ -10,7 +10,7 @@
 #app{display:none;height:100vh;overflow:hidden}#app.active{display:flex;flex-direction:column}.top-nav{height:58px;flex:none;background:#172033;color:#fff;display:flex;align-items:center;padding:0 20px;gap:18px}.nav-logo{display:flex;align-items:center;gap:9px;font-weight:700}.nav-logo-dot{width:30px;height:30px;border-radius:9px;background:var(--primary);display:grid;place-items:center;font-size:12px}.nav-scene-switch{display:flex;gap:5px}.nav-scene-btn,.nav-btn,.demo-mode-btn{border:0;border-radius:6px;padding:7px 10px;background:transparent;color:#c7cfdf}.nav-scene-btn.active,.demo-mode-btn.active{background:#fff;color:var(--primary)}.nav-demo-controls{margin-left:auto;display:flex;align-items:center;gap:8px}.demo-mode-switch{display:flex;background:#29344a;border-radius:7px;padding:2px}
 .view-tabs{height:48px;flex:none;background:#fff;border-bottom:1px solid var(--border);display:flex;padding-left:20px}.view-tab{border:0;background:transparent;padding:0 22px;color:var(--text-2);font-weight:650;border-bottom:3px solid transparent}.view-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
 .main-content{flex:1;min-height:0;padding:14px}.view-panel{height:100%;display:none}.view-panel.active{display:flex}.meeting-view{gap:14px}.side-panel{width:33%;min-width:300px;background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;overflow:hidden}.side-header{height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px}.side-tabs{display:flex;gap:6px}.side-tab{border:0;background:transparent;padding:8px 10px;color:var(--text-2);border-radius:6px}.side-tab.active{background:var(--primary-light);color:var(--primary)}.side-add-btn{margin-left:auto;width:30px;height:30px;border:0;border-radius:50%;background:var(--primary);color:#fff}.side-body{flex:1;overflow:auto;padding:12px}.transcript-panel{flex:1;background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;overflow:hidden}.transcript-header{height:54px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;padding:0 16px}.recording-indicator{display:flex;align-items:center;gap:7px;color:var(--danger);font-size:12px}.rec-dot{width:9px;height:9px;border-radius:50%;background:var(--danger)}.timer{font-family:ui-monospace,monospace;font-weight:700}.speaker-pending-bubble{margin-left:auto;background:var(--warning-light);color:#ad6800;padding:6px 10px;border-radius:14px}.transcript-body{flex:1;overflow:auto;padding:16px}.transcript-item{padding:10px 8px;border-bottom:1px solid var(--border-light)}.transcript-meta{display:flex;gap:10px;align-items:center;margin-bottom:4px}.transcript-time{font-size:11px;color:var(--text-3)}.transcript-speaker{font-weight:700;color:var(--primary)}.transcript-speaker.unknown{color:var(--warning)}.dept{font-weight:400;font-size:10px;margin-left:5px;color:var(--text-3)}.transcript-content{line-height:1.7;color:var(--text-2)}.transcript-content.dispute-mark{background:var(--danger-light);border-left:3px solid var(--danger);padding:7px}.highlight{background:#fff1b8!important}.typing-cursor{display:inline-block;width:2px;height:1em;background:var(--primary);animation:blink 1s infinite}.transcript-footer{min-height:62px;border-top:1px solid var(--border);padding:9px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.status-text{color:var(--text-3);font-size:12px;flex:1}.footer-btn,.modal-btn{padding:7px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text-2)}.footer-btn.primary,.modal-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}.footer-btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
-.real-recording-module{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;background:#f7f9fc;border:1px solid var(--border)}.record-main-btn{height:36px;padding:0 14px;border:0;border-radius:18px;color:#fff;font-weight:700;background:var(--danger)}.record-main-btn.recording{animation:recordPulse 1.4s infinite}.speaker-switch-btn{height:34px;padding:0 12px;border:1px solid #b7d4ff;border-radius:17px;background:#eef6ff;color:var(--primary)}.mic-level{display:flex;align-items:center;gap:2px;width:34px;height:22px}.mic-level i{width:3px;height:5px;border-radius:3px;background:var(--danger)}.live-interim{padding:12px;margin:8px 0;border-radius:8px;background:var(--warning-light);border:1px dashed #ffd591}.live-interim:after{content:"｜";animation:blink 1s infinite}
+.real-recording-module{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;background:#f7f9fc;border:1px solid var(--border)}.record-main-btn{height:36px;padding:0 14px;border:0;border-radius:18px;color:#fff;font-weight:700;background:var(--danger)}.record-main-btn.recording{animation:recordPulse 1.4s infinite}.speaker-switch-btn{height:34px;padding:0 12px;border:1px solid #b7d4ff;border-radius:17px;background:#eef6ff;color:var(--primary)}.ai-enhance-btn{height:34px;padding:0 11px;border:1px solid #d3c6ff;border-radius:17px;background:#f6f2ff;color:#722ed1}.ai-enhance-btn.connected{border-color:#b7eb8f;background:#f6ffed;color:#389e0d}.ai-processing{display:inline-flex;align-items:center;gap:5px;color:#722ed1}.ai-processing:before{content:"";width:7px;height:7px;border:2px solid #d3c6ff;border-top-color:#722ed1;border-radius:50%;animation:spin .8s linear infinite}.speaker-choice-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.speaker-choice{padding:12px 8px;border:1px solid var(--border);border-radius:8px;background:#fff}.speaker-choice.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}.mic-level{display:flex;align-items:center;gap:2px;width:34px;height:22px}.mic-level i{width:3px;height:5px;border-radius:3px;background:var(--danger)}.live-interim{padding:12px;margin:8px 0;border-radius:8px;background:var(--warning-light);border:1px dashed #ffd591}.live-interim:after{content:"｜";animation:blink 1s infinite}
 .topic-group-label{font-size:12px;color:var(--text-3);margin:8px 0}.topic-card,.dispute-card{border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:9px}.topic-card.active{border-color:var(--primary);background:var(--primary-light)}.topic-card-header,.dispute-header{display:flex;align-items:center;gap:7px}.topic-title{font-weight:700;flex:1}.topic-actions{display:flex}.topic-action-btn{border:0;background:transparent;color:var(--text-3)}.topic-meta{font-size:11px;color:var(--text-3);display:flex;gap:12px;margin-top:7px}.topic-points{margin:8px 0 0;padding-left:18px;color:var(--text-2)}.topic-points li{margin:4px 0}.empty-state{text-align:center;color:var(--text-3);padding:36px}.empty-state-icon{font-size:32px}
 .minutes-view{flex-direction:column}.minutes-container{position:relative;flex:1;background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;overflow:hidden}.minutes-header{height:72px;flex:none;padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;background:var(--primary-bg)}.minutes-title{font-size:18px;font-weight:700;flex:1}.minutes-meta{display:flex;gap:15px;color:var(--text-2);font-size:12px}.minutes-body{flex:1;overflow-y:auto;padding:22px 32px 30px 220px}.minutes-section{margin-bottom:26px;scroll-margin-top:18px}.minutes-section-title{font-size:15px;font-weight:700;margin-bottom:11px;padding-bottom:7px;border-bottom:2px solid var(--primary);display:inline-block}.section-num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:5px;background:var(--primary);color:#fff;font-size:12px;margin-right:7px}.minutes-anchor{position:absolute;top:72px;left:0;bottom:0;width:188px;z-index:5;display:flex;flex-direction:column;gap:4px;overflow:auto;padding:16px 12px;background:#fafbfc;border-right:1px solid var(--border)}.minutes-anchor:before{content:"会议纪要";padding:0 10px 8px;color:var(--text-3);font-size:12px;font-weight:700}.minutes-anchor button{border:0;border-left:3px solid transparent;background:transparent;border-radius:6px;padding:9px;text-align:left;color:var(--text-2)}.minutes-anchor button.active,.minutes-anchor button:hover{border-left-color:var(--primary);background:var(--primary-light);color:var(--primary)}
 .minutes-container.has-source-pane .minutes-header,.minutes-container.has-source-pane .minutes-body{padding-right:calc(42% + 24px)}.minutes-source-pane{position:absolute;z-index:6;top:0;right:0;bottom:0;width:42%;min-width:360px;background:#fff;border-left:12px solid #e9ebef;display:flex;flex-direction:column}.source-pane-header{padding:15px 20px;min-height:72px;border-bottom:1px solid var(--border);font-size:18px;font-weight:700}.source-pane-subtitle{display:block;margin-top:3px;font-size:11px;font-weight:400;color:var(--text-3)}.source-pane-list{flex:1;overflow:auto;padding:16px}.source-record{padding:11px 13px;margin-bottom:10px;border:1px solid transparent;border-radius:7px;line-height:1.7}.source-record.active{background:#e8edff;border-color:#c7d2fe}.source-record-meta{font-size:11px;color:var(--text-3);margin-bottom:3px}.source-record-meta b{color:var(--primary)}.source-player{border-top:1px solid var(--border);padding:11px 18px}.source-progress{height:5px;background:#e5e7eb;border-radius:4px;overflow:hidden}.source-progress i{display:block;width:36%;height:100%;background:var(--text-2)}.source-controls{display:flex;align-items:center;justify-content:space-between;padding-top:10px}.source-play{width:34px;height:34px;border:0;border-radius:50%;background:var(--text-1);color:#fff}
@@ -21,6 +21,7 @@
 @keyframes blink{50%{opacity:0}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes recordPulse{50%{box-shadow:0 0 0 7px rgba(245,34,45,.1)}}
 .live-dispute-card{border:1px solid #ffccc7;border-radius:10px;background:#fff;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 9px rgba(245,34,45,.06)}.live-dispute-card.resolved{border-color:#b7eb8f;box-shadow:none}.live-dispute-top{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff2f0;border-bottom:1px solid #ffccc7}.resolved .live-dispute-top{background:#f6ffed;border-bottom-color:#d9f7be}.dispute-live-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);animation:recordPulse 1.4s infinite}.resolved .dispute-live-dot{background:var(--success);animation:none}.live-dispute-state{font-size:11px;font-weight:700;color:var(--danger)}.resolved .live-dispute-state{color:var(--success)}.live-dispute-time{margin-left:auto;font-size:11px;color:var(--text-3)}.live-dispute-main{padding:12px}.live-dispute-title{font-size:14px;font-weight:750;margin-bottom:6px}.live-dispute-ai{font-size:11px;line-height:1.55;color:var(--text-3);padding:7px 9px;background:#fafafa;border-radius:6px;margin-bottom:10px}.stance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.stance-card{padding:9px;border-radius:7px;background:#f0f7ff;border-left:3px solid var(--primary);font-size:11px;line-height:1.55}.stance-card:only-child{grid-column:1/-1}.stance-card:nth-child(even){background:#fff7e6;border-left-color:var(--warning)}.stance-label{display:block;font-weight:700;color:var(--primary);margin-bottom:3px}.stance-card:nth-child(even) .stance-label{color:#ad6800}.live-dispute-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px;color:var(--text-3);font-size:10px}.live-dispute-resolution{margin-top:9px;padding:9px;background:#f6ffed;border-radius:7px;font-size:11px;line-height:1.6;color:#237804}.live-dispute-actions{display:flex;align-items:center;gap:7px;padding:9px 12px;border-top:1px solid var(--border-light)}.dispute-action-link{border:0;background:transparent;color:var(--text-3);font-size:11px;padding:5px}.dispute-action-primary{margin-left:auto;border:0;border-radius:6px;padding:7px 11px;background:var(--danger);color:#fff;font-size:11px;font-weight:700}.resolution-options{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.resolution-option{padding:9px;border:1px solid var(--border);border-radius:7px}.resolution-option:has(input:checked){border-color:var(--primary);background:var(--primary-light)}.pending-item-card{display:block}.pending-item-head{display:flex;gap:8px;align-items:flex-start}.pending-context{margin:9px 0 0;padding:8px 10px;background:#fafafa;border-left:3px solid #d9d9d9;border-radius:5px;font-size:11px;line-height:1.65;color:var(--text-2)}.pending-context b{color:var(--text-3)}.pending-state-switch{display:flex;gap:4px;margin-left:auto}.pending-state-btn{padding:5px 9px;border:1px solid var(--border);background:#fff;color:var(--text-3);border-radius:14px;font-size:10px}.pending-state-btn.active.confirmed{border-color:var(--success);background:var(--success-light);color:#237804}.pending-state-btn.active.pending{border-color:var(--warning);background:var(--warning-light);color:#ad6800}
 @media(max-width:1100px){.minutes-source-pane{display:none}.minutes-container.has-source-pane .minutes-header,.minutes-container.has-source-pane .minutes-body{padding-right:24px}.meeting-view{flex-direction:column}.side-panel{width:100%;height:36%}.stance-grid{grid-template-columns:1fr}}
+.source-progress{height:7px;cursor:pointer;position:relative}.source-progress:hover{height:9px;margin-top:-1px}.source-progress i{width:0;background:var(--primary);transition:width .12s linear;pointer-events:none}.source-controls{gap:10px}.source-time{font-family:ui-monospace,monospace;font-size:12px;min-width:92px}.source-play{flex:none}.source-rate{border:0;background:transparent;color:var(--text-2);padding:6px}.source-record{transition:background .2s,border-color .2s}
 </style>
 </head>
 <body>
@@ -43,7 +44,7 @@
     <section class="view-panel meeting-view active" id="view-meeting">
       <aside class="side-panel"><div class="side-header"><div class="side-tabs"><button class="side-tab active" data-sidetab="topics" onclick="switchSideTab('topics')">议题 <span id="topicCount">0</span></button><button class="side-tab" data-sidetab="disputes" onclick="switchSideTab('disputes')">争议 <span id="disputeCount">0</span></button></div><button class="side-add-btn" onclick="showAddTopicModal()">+</button></div><div class="side-body" id="sideBody"></div></aside>
       <section class="transcript-panel"><div class="transcript-header"><div class="recording-indicator"><div class="rec-dot" id="realRecDot" style="opacity:.35"></div><span id="realRecLabel">等待开始录音</span></div><div class="timer" id="meetingTimer">00:00</div><div class="speaker-pending-bubble" id="pendingBubble" style="display:none" onclick="showSpeakerFixModal()">⚠ 待确认发言人 <span id="pendingCount">0</span></div></div><div class="transcript-body" id="transcriptBody"></div>
-        <div class="transcript-footer"><span class="status-text" id="transcriptStatus">点击“开始录音”，允许浏览器访问麦克风</span><div class="real-recording-module"><div class="mic-level" id="micLevel"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="record-main-btn" id="recordBtn" onclick="startRealRecording()">● 开始录音</button><button class="speaker-switch-btn" id="speakerSwitchBtn" onclick="switchLiveSpeaker()" disabled>说话人1 ⇄</button><button class="footer-btn danger" id="stopRecordBtn" onclick="stopRealRecording()" disabled>■ 结束录音并生成纪要</button></div><button class="footer-btn" onclick="nextTranscript()" id="nextBtn">模拟发言</button><button class="footer-btn danger" id="endDemoBtn" onclick="endSimulatedMeeting()">结束模拟会议</button></div>
+        <div class="transcript-footer"><span class="status-text" id="transcriptStatus">点击“开始录音”，允许浏览器访问麦克风</span><div class="real-recording-module"><div class="mic-level" id="micLevel"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="record-main-btn" id="recordBtn" onclick="startRealRecording()">● 开始录音</button><button class="speaker-switch-btn" id="speakerSwitchBtn" onclick="showLiveSpeakerSelector()" disabled>说话人1 ▾</button><button class="ai-enhance-btn" id="aiEnhanceBtn" onclick="showAIConfigModal()">✨ 本地智能</button><button class="footer-btn danger" id="stopRecordBtn" onclick="stopRealRecording()" disabled>■ 结束录音并生成纪要</button></div><button class="footer-btn" onclick="nextTranscript()" id="nextBtn">模拟发言</button><button class="footer-btn danger" id="endDemoBtn" onclick="endSimulatedMeeting()">结束模拟会议</button></div>
       </section>
     </section>
     <section class="view-panel minutes-view" id="view-minutes"><div class="minutes-container"><div class="generating-overlay" id="genOverlay"><div class="gen-spinner"></div><div class="gen-text" id="genText">AI 正在生成会议纪要...</div><div class="gen-progress"><div class="gen-progress-bar" id="genProgressBar"></div></div></div><div class="minutes-header"><div class="minutes-title" id="minutesTitle">会议纪要</div><div class="minutes-meta"><span>📅 <span id="minutesDate">—</span></span><span>⏱ <span id="minutesDuration">—</span></span><span>👥 <span id="minutesAttendees">—</span></span></div></div><div class="minutes-body" id="minutesBody"><div class="empty-state"><div class="empty-state-icon">📝</div><div>会议结束后自动生成结构化纪要</div></div></div><div class="minutes-footer" id="minutesFooter" style="display:none"><div class="permission-toggle"><span>仅主持人可编辑</span><div class="switch on" id="permSwitch" onclick="togglePermission()"></div></div><div class="spacer"></div><button class="footer-btn" onclick="showShareModal()">分享</button><button class="footer-btn" onclick="showExportModal()">导出</button><button class="footer-btn primary" onclick="showSyncModal()">同步协作工具</button></div></div></section>
@@ -256,7 +257,16 @@ let state = {
   realRecording: false,
   realRecordingSession: false,
   activeSpeakerNo: 1,
+  liveSpeakerCount: 1,
   lastSpeechAt: 0,
+  lastAutoSpeakerAt: 0,
+  aiEndpoint: (()=>{try{return localStorage.getItem('meetingAiEndpoint')||''}catch{return ''}})(),
+  aiProvider: (()=>{try{return localStorage.getItem('meetingAiProvider')||'deepseek'}catch{return 'deepseek'}})(),
+  aiModel: (()=>{try{return localStorage.getItem('meetingAiModel')||'deepseek-v4-flash'}catch{return 'deepseek-v4-flash'}})(),
+  aiAnalyzing: false,
+  aiRequestId: 0,
+  aiJobs: [],
+  sourceActiveIndex: -1,
   mediaRecorder: null,
   mediaStream: null,
   recognition: null,
@@ -318,7 +328,11 @@ function initScene(sceneKey) {
   state.realRecording = false;
   state.realRecordingSession = false;
   state.activeSpeakerNo = 1;
+  state.liveSpeakerCount = 1;
   state.lastSpeechAt = 0;
+  state.lastAutoSpeakerAt = 0;
+  state.aiJobs = [];
+  state.sourceActiveIndex = -1;
   state.audioChunks = [];
   state.generatedScene = null;
   state.forceFullMinutes = false;
@@ -344,7 +358,8 @@ function initScene(sceneKey) {
   if ($('realRecDot')) $('realRecDot').style.opacity = '.35';
   if ($('recordBtn')) { $('recordBtn').disabled = false; $('recordBtn').classList.remove('recording'); $('recordBtn').textContent = '● 开始录音'; }
   if ($('stopRecordBtn')) $('stopRecordBtn').disabled = true;
-  if ($('speakerSwitchBtn')) { $('speakerSwitchBtn').disabled = true; $('speakerSwitchBtn').textContent = '说话人1 ⇄'; }
+  if ($('speakerSwitchBtn')) { $('speakerSwitchBtn').disabled = true; $('speakerSwitchBtn').textContent = '说话人1 ▾'; }
+  updateAIEnhanceBadge();
   switchView('meeting');
   $('pendingBubble').style.display = 'none';
   $('minutesFooter').style.display = 'none';
@@ -423,14 +438,22 @@ async function startRealRecording() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true } });
     state.mediaStream = stream;
     state.audioChunks = [];
+    if (state.recordedAudioUrl) URL.revokeObjectURL(state.recordedAudioUrl);
+    state.recordedAudioUrl = '';
+    state.sourceActiveIndex = -1;
     state.realRecording = true;
     state.realRecordingSession = true;
     state.meetingStarted = true;
     state.meetingEnded = false;
     state.elapsedSeconds = 0;
     state.transcripts = [];
+    state.topics = [];
+    state.disputes = [];
+    state.resolvedDisputes = [];
     state.activeSpeakerNo = 1;
+    state.liveSpeakerCount = 1;
     state.lastSpeechAt = 0;
+    state.lastAutoSpeakerAt = 0;
     renderAllTranscripts();
     startTimer();
 
@@ -441,6 +464,7 @@ async function startRealRecording() {
       if (!state.audioChunks.length) return;
       if (state.recordedAudioUrl) URL.revokeObjectURL(state.recordedAudioUrl);
       state.recordedAudioUrl = URL.createObjectURL(new Blob(state.audioChunks, { type:recorder.mimeType || 'audio/webm' }));
+      attachRecordedAudio();
     };
     recorder.start(500);
 
@@ -471,27 +495,90 @@ async function startRealRecording() {
     $('recordBtn').textContent = '● 正在录音';
     $('stopRecordBtn').disabled = false;
     $('speakerSwitchBtn').disabled = false;
-    $('speakerSwitchBtn').textContent = '说话人1 ⇄';
+    $('speakerSwitchBtn').textContent = '说话人1 ▾';
     $('realRecLabel').textContent = '录音中 · 实时转写';
     $('realRecDot').style.opacity = '1';
-    $('transcriptStatus').textContent = 'AI 正在实时识别；停顿超过约 2.5 秒将自动切换说话人';
+    $('transcriptStatus').textContent = state.aiEndpoint ? '大模型正在增量修正转写，并实时提炼议题与争议' : '本地智能正在修正转写；可选择或新增任意说话人';
     toast('麦克风已开启，请开始讲话', 'success');
   } catch (error) {
     toast(error?.name === 'NotAllowedError' ? '未获得麦克风权限，请在浏览器地址栏允许麦克风' : '无法启动录音：' + error.message, 'danger', 5000);
   }
 }
 
-function commitLiveTranscript(text) {
-  if (!text) return;
+function commitLiveTranscript(rawText) {
+  if (!rawText) return;
   const now = Date.now();
-  if (state.lastSpeechAt && now - state.lastSpeechAt > 2500) state.activeSpeakerNo = state.activeSpeakerNo === 1 ? 2 : 1;
+  // 浏览器无法可靠识别声纹；长停顿仅作为“新话轮”提示，用户可随时手动选择正确说话人。
+  if (state.lastSpeechAt && now - state.lastSpeechAt > 6500 && now - state.lastAutoSpeakerAt > 8000) {
+    state.liveSpeakerCount++;
+    state.activeSpeakerNo = state.liveSpeakerCount;
+    state.lastAutoSpeakerAt = now;
+    toast(`检测到新话轮，暂标记为说话人${state.activeSpeakerNo}`, 'info', 1800);
+  }
   state.lastSpeechAt = now;
-  const activeTopic = state.topics.find(t => t.active);
-  const hasDisputeSignal = /但是|不过|不同意|不赞成|担心|顾虑|风险|不行|反对|分歧/.test(text);
-  const dispute = hasDisputeSignal ? { topic:(activeTopic?.title || '当前议题') + ' · 方案分歧', content:summarizeSpeech(text) } : undefined;
+  const text = correctTranscriptLocally(rawText);
+  const topic = inferLiveTopic(text);
+  const analysis = inferLiveDispute(text, topic);
   removeLiveInterim();
-  addTranscript({ speaker:'live' + state.activeSpeakerNo, time:fmtTime(state.elapsedSeconds), text, agenda:activeTopic?.agendaId || 'live-a1', topic:activeTopic?.title || '实时讨论', dispute });
-  $('speakerSwitchBtn').textContent = `说话人${state.activeSpeakerNo} ⇄`;
+  const item = addTranscript({
+    speaker:'live' + state.activeSpeakerNo,
+    time:fmtTime(state.elapsedSeconds),
+    text,
+    rawText,
+    agenda:topic.agendaId,
+    topic:topic.title,
+    dispute:analysis.dispute,
+    resolve:analysis.resolve,
+  });
+  $('speakerSwitchBtn').textContent = `说话人${state.activeSpeakerNo} ▾`;
+  if(state.aiEndpoint){
+    const job=requestModelEnhancement(item);
+    state.aiJobs.push(job);
+    job.finally(()=>{state.aiJobs=state.aiJobs.filter(x=>x!==job)});
+  }
+}
+
+function correctTranscriptLocally(text='') {
+  let corrected = text.trim()
+    .replace(/^(嗯+|呃+|额+|啊+|那个[，,]?|就是[，,]?|然后[，,]?)+/g,'')
+    .replace(/(嗯+|呃+|额+|这个这个|然后然后|就是就是)/g,'')
+    .replace(/\s+/g,' ')
+    .replace(/([，。！？；])\1+/g,'$1');
+  if (corrected && !/[。！？]$/.test(corrected)) corrected += '。';
+  return corrected || text.trim();
+}
+
+function inferLiveTopic(text) {
+  const categories = [
+    ['产品需求与体验',/需求|功能|产品|用户|体验|设计|页面|流程/],
+    ['技术方案与实现',/技术|研发|架构|接口|数据|算法|模型|性能|开发|测试/],
+    ['项目进度与排期',/进度|排期|时间|上线|发布|延期|里程碑|截止/],
+    ['资源与预算',/预算|成本|报价|资源|人力|人员|投入|采购/],
+    ['客户与市场',/客户|市场|销售|渠道|运营|推广|品牌|商务/],
+    ['风险与问题',/风险|问题|故障|担心|顾虑|阻塞|影响/],
+    ['行动项与分工',/负责|跟进|完成|提交|安排|行动项|待办/],
+  ];
+  const matched = categories.map(([title,re])=>({title,score:(text.match(new RegExp(re.source,'g'))||[]).length})).sort((a,b)=>b.score-a.score)[0];
+  const active = state.topics.find(t=>t.active && !t.completed);
+  const title = matched?.score ? matched.title : (active?.title || `议题${state.topics.length + 1}`);
+  let topic = state.topics.find(t=>t.title===title && !t.completed);
+  if (!topic) {
+    state.topics.forEach(t=>t.active=false);
+    topic={id:'live-topic-'+Date.now(),title,agendaId:'live-a'+(state.topics.length+1),speakers:[],pointCount:0,points:[],completed:false,active:true,aiGenerated:true};
+    state.topics.push(topic);
+  } else {
+    state.topics.forEach(t=>t.active=t===topic);
+  }
+  return topic;
+}
+
+function inferLiveDispute(text, topic) {
+  const opposition = /但是|不过|不同意|不赞成|反对|不建议|不行|不能|担心|顾虑|风险|分歧|有问题/;
+  const resolution = /最终决定|最终确定|达成一致|统一意见|就按|同意采用|结论是|决定采用/;
+  const open = state.disputes.find(d=>d.topic.startsWith(topic.title));
+  if (resolution.test(text) && open) return { resolve:open.topic };
+  if (!opposition.test(text)) return {};
+  return { dispute:{topic:`${topic.title} · 待收敛分歧`,content:summarizeSpeech(text,68)} };
 }
 
 function updateLiveInterim(text) {
@@ -505,12 +592,173 @@ function updateLiveInterim(text) {
   $('transcriptBody').scrollTop = $('transcriptBody').scrollHeight;
 }
 function removeLiveInterim() { $('liveInterim')?.remove(); }
-function switchLiveSpeaker() {
+function showLiveSpeakerSelector() {
   if (!state.realRecording) return;
-  state.activeSpeakerNo = state.activeSpeakerNo === 1 ? 2 : 1;
-  state.lastSpeechAt = Date.now();
-  $('speakerSwitchBtn').textContent = `说话人${state.activeSpeakerNo} ⇄`;
-  toast(`已切换为说话人${state.activeSpeakerNo}`, 'info', 1600);
+  const choices=Array.from({length:state.liveSpeakerCount},(_,i)=>`<button class="speaker-choice ${state.activeSpeakerNo===i+1?'active':''}" onclick="selectLiveSpeaker(${i+1})">说话人${i+1}</button>`).join('');
+  openModal('选择当前说话人', `<div class="form-group"><div class="form-label">已识别说话人</div><div class="speaker-choice-grid">${choices}<button class="speaker-choice" onclick="addLiveSpeaker()">＋ 新说话人</button></div></div><div style="color:var(--text-3);font-size:12px;line-height:1.7">切换只影响下一段转写；可持续新增说话人，不限制为两人。</div>`, `<button class="modal-btn" onclick="closeModal()">关闭</button>`);
+}
+function selectLiveSpeaker(no) {
+  state.activeSpeakerNo=no;
+  state.lastSpeechAt=Date.now();
+  $('speakerSwitchBtn').textContent=`说话人${no} ▾`;
+  closeModal();
+  toast(`已切换为说话人${no}`,'info',1600);
+}
+function addLiveSpeaker() {
+  state.liveSpeakerCount++;
+  selectLiveSpeaker(state.liveSpeakerCount);
+}
+function switchLiveSpeaker() { showLiveSpeakerSelector(); }
+
+function updateAIEnhanceBadge() {
+  const btn=$('aiEnhanceBtn');
+  if(!btn)return;
+  btn.classList.toggle('connected',!!state.aiEndpoint);
+  btn.classList.toggle('ai-processing',!!state.aiAnalyzing);
+  const provider=state.aiProvider==='doubao'?'豆包':'DeepSeek';
+  btn.textContent=state.aiAnalyzing?'AI 修正中':(state.aiEndpoint?`${provider} 已连接`:'✨ 本地智能');
+}
+function showAIConfigModal() {
+  openModal('连接大模型', `
+    <div class="form-group"><label class="form-label">模型服务</label><select class="form-input" id="aiProviderInput" onchange="applyProviderPreset()"><option value="deepseek">DeepSeek</option><option value="doubao">豆包 / 火山方舟</option><option value="compatible">其他兼容服务</option></select></div>
+    <div class="form-group"><label class="form-label">安全代理服务地址</label><input class="form-input" id="aiEndpointInput" placeholder="例如：https://your-domain.com/api/meeting-ai"></div>
+    <div class="form-group"><label class="form-label">模型名称</label><input class="form-input" id="aiModelInput" placeholder="DeepSeek 模型名或豆包推理接入点 ID"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div style="padding:9px;background:var(--success-light);border-radius:7px;color:#237804">✓ 实时 ASR 润色</div><div style="padding:9px;background:var(--success-light);border-radius:7px;color:#237804">✓ 会后结构化纪要</div></div>
+    <div style="padding:10px 12px;background:var(--primary-bg);border-radius:7px;color:var(--text-2);font-size:12px;line-height:1.75">同一代理地址接收 <code>asr_polish</code> 和 <code>minutes_generate</code> 两种任务。DeepSeek/豆包密钥必须保存在代理服务端，不能写进公开 HTML。留空时使用本地分析。</div>
+  `, `<button class="modal-btn" onclick="closeModal()">取消</button><button class="modal-btn primary" onclick="saveAIConfig()">保存配置</button>`);
+  setTimeout(()=>{$('aiProviderInput').value=state.aiProvider;$('aiEndpointInput').value=state.aiEndpoint;$('aiModelInput').value=state.aiModel},0);
+}
+function applyProviderPreset() {
+  const provider=$('aiProviderInput')?.value,model=$('aiModelInput');
+  if(!model)return;
+  if(provider==='deepseek')model.value='deepseek-v4-flash';
+  if(provider==='doubao')model.value='请填写方舟推理接入点 ID';
+  if(provider==='compatible')model.value='';
+}
+function saveAIConfig() {
+  const endpoint=$('aiEndpointInput')?.value.trim()||'';
+  const provider=$('aiProviderInput')?.value||'deepseek';
+  const model=$('aiModelInput')?.value.trim()||'';
+  if(endpoint && !/^https?:\/\//.test(endpoint)){toast('请输入以 http:// 或 https:// 开头的服务地址','warning');return;}
+  if(endpoint&&!model){toast('请填写模型名称或豆包推理接入点 ID','warning');return;}
+  state.aiEndpoint=endpoint;
+  state.aiProvider=provider;state.aiModel=model;
+  try{if(endpoint){localStorage.setItem('meetingAiEndpoint',endpoint);localStorage.setItem('meetingAiProvider',provider);localStorage.setItem('meetingAiModel',model)}else{localStorage.removeItem('meetingAiEndpoint')}}catch{}
+  closeModal();updateAIEnhanceBadge();
+  toast(endpoint?'已启用实时转写润色与会后纪要生成':'已切换为本地智能分析',endpoint?'success':'info',2800);
+}
+function parseProviderPayload(data) {
+  let value=data?.result||data;
+  if(value?.choices?.[0]?.message?.content)value=value.choices[0].message.content;
+  else if(value?.output_text)value=value.output_text;
+  else if(Array.isArray(value?.output))value=value.output.flatMap(x=>x.content||[]).map(x=>x.text||'').join('');
+  if(typeof value==='string'){
+    const cleaned=value.replace(/^```json\s*|\s*```$/g,'').trim();
+    try{return JSON.parse(cleaned)}catch{return {text:value}}
+  }
+  return value||{};
+}
+async function requestModelEnhancement(item) {
+  if(!state.aiEndpoint||!item)return;
+  const requestId=++state.aiRequestId;
+  state.aiAnalyzing=true;updateAIEnhanceBadge();
+  try {
+    const recent=state.transcripts.slice(-8).map(t=>({id:t.id,time:t.time,speaker:t.speakerName,text:t.text,topic:t.topic}));
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),8000);
+    const response=await fetch(state.aiEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({
+      task:'asr_polish',stage:'realtime',provider:state.aiProvider,model:state.aiModel,language:'zh-CN',requestId,
+      instructions:'你是会议ASR校对专家。结合上下文纠正同音错字、专有名词、断句和标点，删除无意义语气词但不得改变事实；同时识别说话人编号、当前议题和明确争议。只返回JSON。',
+      latest:{id:item.id,rawText:item.rawText||item.text,speaker:item.speakerName,time:item.time},recentTranscripts:recent,
+      responseSchema:{correctedText:'string',speakerNumber:'number|null',topicTitle:'string',topicSummary:'string',dispute:{title:'string',summary:'string'} }
+    })});
+    clearTimeout(timeout);
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const data=parseProviderPayload(await response.json());
+    applyModelEnhancement(item,data);
+  } catch(error) {
+    console.warn('大模型增强失败，已保留本地分析结果',error);
+    $('transcriptStatus').textContent='大模型服务暂不可用，已自动保留本地智能分析结果';
+  } finally {
+    state.aiAnalyzing=false;updateAIEnhanceBadge();
+  }
+}
+function applyModelEnhancement(item,result={}) {
+  if(!item||!result||typeof result!=='object')return;
+  if(result.correctedText?.trim()){
+    item.text=correctTranscriptLocally(result.correctedText);
+    const content=document.querySelector(`#${item.id} .transcript-content`);
+    if(content)content.textContent=item.text;
+  }
+  const speakerNo=Number(result.speakerNumber);
+  if(Number.isInteger(speakerNo)&&speakerNo>0&&speakerNo<=32){
+    state.liveSpeakerCount=Math.max(state.liveSpeakerCount,speakerNo);
+    item.speaker='live'+speakerNo;item.speakerName='说话人'+speakerNo;
+    const label=document.querySelector(`#${item.id} .transcript-speaker`);
+    if(label)label.innerHTML=`说话人${speakerNo}<span class="dept">大模型识别</span>`;
+  }
+  if(result.topicTitle?.trim()){
+    const title=result.topicTitle.trim().slice(0,28);
+    let topic=state.topics.find(t=>t.title===title);
+    if(!topic){topic={id:'ai-topic-'+Date.now(),title,agendaId:'live-a'+(state.topics.length+1),speakers:[],pointCount:0,points:[],completed:false,active:true,aiGenerated:true};state.topics.push(topic);}
+    state.topics.forEach(t=>t.active=t===topic);
+    if(!topic.speakers.includes(item.speakerName))topic.speakers.push(item.speakerName);
+    const point=summarizeSpeech(result.topicSummary||item.text,60);
+    if(point&&!topic.points.includes(point))topic.points.push(point);
+    item.topic=title;item.agenda=topic.agendaId;
+  }
+  if(result.dispute?.title&&!item.isDispute){
+    item.dispute={topic:result.dispute.title.slice(0,38),content:summarizeSpeech(result.dispute.summary||item.text,68)};
+    item.isDispute=true;handleDispute(item,item.id);
+    document.querySelector(`#${item.id} .transcript-content`)?.classList.add('dispute-mark');
+  }
+  renderSidePanel();
+  $('transcriptStatus').textContent='大模型已修正最新转写，并同步更新议题与争议点';
+}
+async function requestModelMinutesGeneration() {
+  if(!state.aiEndpoint||!state.generatedScene)return null;
+  state.aiAnalyzing=true;updateAIEnhanceBadge();
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),25000);
+  try {
+    const transcript=state.transcripts.map((t,index)=>({index,time:t.time,speaker:t.speakerName,text:t.text}));
+    const response=await fetch(state.aiEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({
+      task:'minutes_generate',stage:'after_meeting',provider:state.aiProvider,model:state.aiModel,language:'zh-CN',
+      instructions:'你是资深会议纪要专家。基于完整转写按实际讨论议程生成结构化纪要；提炼而非复制原文，区分结论与待确认事项，说明争议双方、前因后果和最终决议，提取负责人、截止时间和优先级。所有信息必须有原文依据，返回JSON。',
+      meeting:{title:state.generatedScene.name,date:state.generatedScene.date,duration:state.generatedScene.duration,transcript},
+      responseSchema:{agenda:[{name:'string',summary:'string',keyPoints:['string'],sourceIndexes:['number']}],conclusions:[{text:'string',topic:'string',sourceIndex:'number'}],pendingItems:[{text:'string',topic:'string',sourceIndex:'number'}],disputes:[{topic:'string',context:'string',sides:[{speaker:'string',content:'string'}],resolution:'string',status:'open|resolved',sourceIndexes:['number']}],todos:[{desc:'string',owner:'string',deadline:'string',priority:'P0|P1|P2',topic:'string',sourceIndex:'number'}]}
+    })});
+    clearTimeout(timeout);
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    return parseProviderPayload(await response.json());
+  } catch(error) {
+    console.warn('大模型纪要生成失败，使用本地结构化结果',error);
+    toast('大模型纪要生成失败，已自动使用本地结果','warning',3500);
+    return null;
+  } finally {
+    clearTimeout(timeout);state.aiAnalyzing=false;updateAIEnhanceBadge();
+  }
+}
+function applyModelMinutesResult(payload) {
+  const result=payload?.minutes||payload;
+  const scene=state.generatedScene;
+  if(!scene||!result||typeof result!=='object')return false;
+  const agendas=Array.isArray(result.agenda)?result.agenda:[];
+  if(agendas.length){
+    scene.agenda=agendas.map((a,i)=>({id:'ai-a'+(i+1),name:(a.name||`议程${i+1}`).slice(0,40),status:'done',summary:a.summary||'',keyPoints:Array.isArray(a.keyPoints)?a.keyPoints:[],sourceIndexes:Array.isArray(a.sourceIndexes)?a.sourceIndexes:[]}));
+    scene.agenda.forEach(a=>a.sourceIndexes.forEach(index=>{const t=state.transcripts[index];if(t){t.agenda=a.id;t.topic=a.name}}));
+    state.topics=scene.agenda.map((a,i)=>{const group=state.transcripts.filter(t=>t.agenda===a.id);return{id:'ai-min-topic-'+i,title:a.name,agendaId:a.id,speakers:[...new Set(group.map(t=>t.speakerName))],pointCount:group.length,points:(a.keyPoints.length?a.keyPoints:[a.summary]).filter(Boolean).slice(0,5),completed:true,active:false,aiGenerated:true}});
+  }
+  const topicOf=x=>x.topic||scene.agenda[0]?.name||'会议讨论';
+  if(Array.isArray(result.conclusions)&&result.conclusions.length)scene.conclusions=result.conclusions.map(x=>({text:x.text||x.summary||'',confidence:'high',topic:topicOf(x),sourceIndex:x.sourceIndex})).filter(x=>x.text);
+  if(Array.isArray(result.pendingItems))scene.pendingItems=result.pendingItems.map(x=>({text:x.text||'',confidence:'low',topic:topicOf(x),status:'pending',sourceIndex:x.sourceIndex})).filter(x=>x.text);
+  if(Array.isArray(result.todos))scene.todos=result.todos.map(x=>({desc:x.desc||x.text||'',owner:x.owner||'待指派',deadline:x.deadline||'待确认',priority:/P0|高/.test(x.priority)?'high':/P1|中/.test(x.priority)?'mid':'low',topic:topicOf(x),status:'todo',strong:true,sourceIndex:x.sourceIndex})).filter(x=>x.desc);
+  if(Array.isArray(result.disputes)){
+    const mapped=result.disputes.map((d,i)=>({id:'ai-min-dispute-'+i,topic:d.topic||'会议分歧',context:d.context||'',sides:Array.isArray(d.sides)?d.sides:[],resolution:d.resolution||'',status:d.status==='resolved'?'resolved':'open',transcriptIds:(d.sourceIndexes||[]).map(index=>state.transcripts[index]?.id).filter(Boolean)}));
+    state.disputes=mapped.filter(d=>d.status==='open');state.resolvedDisputes=mapped.filter(d=>d.status==='resolved');
+  }
+  state.generatedScene=scene;
+  logChange(`${state.aiProvider==='doubao'?'豆包':'DeepSeek'} 已生成结构化会议纪要`);
+  return true;
 }
 function startMicMeter(stream) {
   try {
@@ -531,7 +779,7 @@ function startMicMeter(stream) {
   } catch { $('micLevel')?.classList.add('active'); }
 }
 
-function stopRealRecording() {
+async function stopRealRecording() {
   if (!state.realRecording) return;
   state.realRecording = false;
   removeLiveInterim();
@@ -547,8 +795,14 @@ function stopRealRecording() {
   $('speakerSwitchBtn').disabled = true;
   $('realRecLabel').textContent = '录音已结束';
   $('realRecDot').style.opacity = '.35';
-  $('transcriptStatus').textContent = '录音已结束，AI 正在生成结构化会议纪要...';
+  $('transcriptStatus').textContent = state.aiJobs.length ? '录音已结束，正在完成最后一轮大模型修正...' : '录音已结束，AI 正在生成结构化会议纪要...';
+  if(state.aiJobs.length) await Promise.allSettled([...state.aiJobs]);
   buildGeneratedSceneFromRecording();
+  if(state.aiEndpoint){
+    $('transcriptStatus').textContent=`正在调用${state.aiProvider==='doubao'?'豆包':'DeepSeek'}生成结构化会议纪要...`;
+    const aiMinutes=await requestModelMinutesGeneration();
+    if(aiMinutes)applyModelMinutesResult(aiMinutes);
+  }
   endMeeting();
 }
 
@@ -663,6 +917,7 @@ function addTranscript(item) {
   // 逐字上屏效果
   renderTranscriptItem(transcriptItem);
   typeWriter(transcriptItem);
+  return transcriptItem;
 }
 
 function typeWriter(item) {
@@ -847,9 +1102,10 @@ function setupSourcePane() {
   const pane = document.createElement('aside');
   pane.className = 'minutes-source-pane';
   const scene = state.generatedScene || SCENES[state.currentScene];
-  pane.innerHTML = `<div class="source-pane-header"><span style="color:var(--warning);font-size:14px;vertical-align:2px;">●</span> 原文<span class="source-pane-subtitle">点击灰色“···”定位；点击转写段落可展开上下文</span></div><div class="source-pane-list" id="sourcePaneList"></div><div class="source-player"><div class="source-progress"><i></i></div><div class="source-controls"><span>${fmtTime(Math.min(state.elapsedSeconds,132))} / ${scene.duration}</span><button class="source-play" onclick="toast(state.recordedAudioUrl?'正在播放录音片段':'当前为转写演示，无可播放音频','info')">▶</button><span>1.0x</span></div></div>`;
+  pane.innerHTML = `<div class="source-pane-header"><span style="color:var(--warning);font-size:14px;vertical-align:2px;">●</span> 原文<span class="source-pane-subtitle">点击灰色引文图标或转写段落，可同步定位文字与录音</span></div><div class="source-pane-list" id="sourcePaneList"></div><div class="source-player"><audio id="recordedAudio" preload="metadata"></audio><div class="source-progress" id="sourceProgress" onclick="seekSourceAudio(event)" title="点击跳转录音"><i id="sourceProgressBar"></i></div><div class="source-controls"><span class="source-time"><span id="sourceCurrentTime">00:00</span> / <span id="sourceDuration">${scene.duration}</span></span><button class="source-play" id="sourcePlayBtn" onclick="toggleSourceAudio()" aria-label="播放或暂停">▶</button><button class="source-rate" id="sourceRateBtn" onclick="cycleSourceRate()">1.0x</button></div></div>`;
   container.appendChild(pane);
   renderSourcePane();
+  attachRecordedAudio();
 }
 
 function renderSourcePane(activeIndex = -1) {
@@ -857,6 +1113,77 @@ function renderSourcePane(activeIndex = -1) {
   if (!list) return;
   list.innerHTML = state.transcripts.map((t, index) => `<article class="source-record ${index===activeIndex?'active':''}" id="source-pane-${index}" onclick="showTranscriptContext(${index})" style="cursor:pointer"><div class="source-record-meta"><b>${t.speakerName}</b> · ${t.time}${t.topic?` · ${t.topic}`:''}</div><div>${t.text}</div></article>`).join('');
   if (activeIndex >= 0) setTimeout(() => $('source-pane-' + activeIndex)?.scrollIntoView({behavior:'smooth', block:'center'}), 20);
+}
+
+function parseTranscriptSeconds(time='00:00') {
+  const parts=String(time).split(':').map(Number);
+  if(parts.some(Number.isNaN))return 0;
+  return parts.length===3?parts[0]*3600+parts[1]*60+parts[2]:(parts[0]||0)*60+(parts[1]||0);
+}
+function formatAudioTime(seconds=0) {
+  const safe=Math.max(0,Math.floor(Number(seconds)||0));
+  const h=Math.floor(safe/3600),m=Math.floor((safe%3600)/60),s=safe%60;
+  return h?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function attachRecordedAudio() {
+  const audio=$('recordedAudio');
+  if(!audio)return;
+  if(!state.recordedAudioUrl){audio.removeAttribute('src');audio.load();return;}
+  if(audio.src!==state.recordedAudioUrl)audio.src=state.recordedAudioUrl;
+  audio.ontimeupdate=syncAudioWithTranscript;
+  audio.onloadedmetadata=()=>{
+    $('sourceDuration').textContent=formatAudioTime(audio.duration||state.elapsedSeconds);
+    syncAudioWithTranscript();
+  };
+  audio.onplay=()=>{$('sourcePlayBtn').textContent='❚❚'};
+  audio.onpause=()=>{$('sourcePlayBtn').textContent='▶'};
+  audio.onended=()=>{$('sourcePlayBtn').textContent='▶'};
+}
+function toggleSourceAudio() {
+  const audio=$('recordedAudio');
+  if(!audio||!state.recordedAudioUrl){toast('当前为模拟转写，只有实际录音后才能播放音频','info');return;}
+  if(audio.paused)audio.play().catch(()=>toast('浏览器阻止了播放，请再次点击播放按钮','warning'));else audio.pause();
+}
+function seekSourceAudio(event) {
+  const audio=$('recordedAudio'),bar=$('sourceProgress');
+  if(!audio||!bar||!state.recordedAudioUrl||!Number.isFinite(audio.duration)){toast('暂无可定位的真实录音','info');return;}
+  const rect=bar.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
+  audio.currentTime=ratio*audio.duration;
+  syncAudioWithTranscript();
+}
+function cycleSourceRate() {
+  const audio=$('recordedAudio');
+  if(!audio||!state.recordedAudioUrl){toast('暂无可播放的真实录音','info');return;}
+  const rates=[1,1.25,1.5,2],current=rates.indexOf(audio.playbackRate),next=rates[(current+1)%rates.length];
+  audio.playbackRate=next;$('sourceRateBtn').textContent=(Number.isInteger(next)?next.toFixed(1):String(next))+'x';
+}
+function highlightSourceRecord(index,scroll=true) {
+  if(index<0||index>=state.transcripts.length)return;
+  if(state.sourceActiveIndex===index&&!scroll)return;
+  state.sourceActiveIndex=index;
+  document.querySelectorAll('.source-record').forEach((el,i)=>el.classList.toggle('active',i===index));
+  if(scroll)$('source-pane-'+index)?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function syncAudioWithTranscript() {
+  const audio=$('recordedAudio');
+  if(!audio)return;
+  const duration=Number.isFinite(audio.duration)?audio.duration:0;
+  $('sourceCurrentTime').textContent=formatAudioTime(audio.currentTime);
+  if(duration)$('sourceProgressBar').style.width=`${Math.min(100,audio.currentTime/duration*100)}%`;
+  let index=0;
+  state.transcripts.forEach((t,i)=>{if(parseTranscriptSeconds(t.time)<=audio.currentTime+.25)index=i});
+  if(index!==state.sourceActiveIndex)highlightSourceRecord(index,true);
+}
+function seekAudioToTranscript(index,autoplay=false) {
+  if(index<0||index>=state.transcripts.length)return;
+  highlightSourceRecord(index,true);
+  const audio=$('recordedAudio');
+  if(audio&&state.recordedAudioUrl){
+    const target=Math.min(parseTranscriptSeconds(state.transcripts[index].time),Math.max(0,(audio.duration||Infinity)-.1));
+    if(Number.isFinite(target))audio.currentTime=target;
+    syncAudioWithTranscript();
+    if(autoplay)audio.play().catch(()=>{});
+  }
 }
 
 function renderTopicCard(t) {
@@ -1458,11 +1785,13 @@ function locateByTopic(topic) {
   if (index < 0) { toast('未找到对应原文片段', 'info'); return; }
   setupSourcePane();
   renderSourcePane(index);
-  toast(`已定位右侧原文：${topic}`, 'success', 1800);
+  seekAudioToTranscript(index, false);
+  toast(state.recordedAudioUrl ? `已定位原文及录音时间点：${topic}` : `已定位右侧原文：${topic}`, 'success', 1800);
 }
 
 function showTranscriptContext(index) {
   if (index < 0 || index >= state.transcripts.length) return;
+  seekAudioToTranscript(index, false);
   const start = Math.max(0, index - 2);
   const records = state.transcripts.slice(start, Math.min(state.transcripts.length, index + 3));
   const selected = state.transcripts[index];
@@ -1472,7 +1801,14 @@ function showTranscriptContext(index) {
       ${records.map((t, i) => `<article style="padding:12px 14px;margin:8px 0;border-radius:8px;${i === index-start ? 'background:#e8edff;border:1px solid #c7d2fe;' : 'background:#fafbfc;border:1px solid transparent;'}"><div style="font-size:12px;color:var(--text-3);"><strong style="color:var(--primary);">${t.speakerName}</strong> · ${t.time}${t.topic ? ` · ${t.topic}` : ''}</div><div style="font-size:14px;color:var(--text-1);line-height:1.75;margin-top:5px;">${t.text}</div></article>`).join('')}
     </div>
     <div style="margin-top:12px;color:var(--text-3);font-size:12px;">可据此核验纪要结论、待确认事项、争议点及任务来源。</div>
-  `, '<button class="modal-btn" onclick="closeModal()">关闭</button><button class="modal-btn primary" onclick="closeModal();toast(\'已复制关联原文\',\'success\')">复制原文</button>');
+  `, `<button class="modal-btn" onclick="closeModal()">关闭</button>${state.recordedAudioUrl?`<button class="modal-btn" onclick="closeModal();playTranscriptAudio(${index})">▶ 播放此处</button>`:''}<button class="modal-btn primary" onclick="closeModal();toast('已复制关联原文','success')">复制原文</button>`);
+}
+
+function playTranscriptAudio(index) {
+  seekAudioToTranscript(index,false);
+  const audio=$('recordedAudio');
+  if(!audio||!state.recordedAudioUrl){toast('暂无真实录音可播放','info');return;}
+  audio.play().catch(()=>toast('浏览器阻止了播放，请点击右侧播放按钮','warning'));
 }
 
 function getPendingContext(item) {
