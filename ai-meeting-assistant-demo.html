@@ -300,6 +300,11 @@ let state = {
   mediaRecorder: null,
   mediaStream: null,
   recognition: null,
+  asrSocket: null,
+  asrAudioContext: null,
+  asrProcessor: null,
+  asrSource: null,
+  asrSilence: null,
   audioChunks: [],
   recordedAudioUrl: '',
   generatedScene: null,
@@ -337,6 +342,8 @@ function logChange(action) {
 function initScene(sceneKey) {
   state.realRecording = false;
   try { state.recognition?.stop(); } catch {}
+  try { state.asrSocket?.close(); } catch {}
+  try { state.asrAudioContext?.close(); } catch {}
   try { if (state.mediaRecorder?.state === 'recording') state.mediaRecorder.stop(); } catch {}
   state.mediaStream?.getTracks?.().forEach(t=>t.stop());
   state.currentScene = sceneKey;
@@ -447,8 +454,7 @@ function switchSideTab(tab) {
 async function startRealRecording() {
   if (state.realRecording) return;
   if (!navigator.mediaDevices?.getUserMedia) { toast('当前浏览器不支持麦克风录音，请使用最新版 Chrome 或 Edge', 'danger', 5000); return; }
-  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Recognition) { toast('当前浏览器不支持实时语音识别，请使用最新版 Chrome 或 Edge', 'danger', 5000); return; }
+  if (!state.aiEndpoint) { toast('请先在“本地智能”中填写豆包 ASR Worker 地址', 'warning', 5000); showAIConfigModal(); return; }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true } });
     state.mediaStream = stream;
@@ -487,27 +493,7 @@ async function startRealRecording() {
     };
     recorder.start(500);
 
-    const recognition = new Recognition();
-    state.recognition = recognition;
-    recognition.lang = 'zh-CN';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 3;
-    recognition.onresult = event => {
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const alternatives=Array.from(event.results[i]).map(x=>({text:x.transcript.trim(),confidence:Number.isFinite(x.confidence)?Number(x.confidence.toFixed(3)):null})).filter(x=>x.text);
-        const text = alternatives[0]?.text||'';
-        if (event.results[i].isFinal) commitLiveTranscript(text,alternatives);
-        else interim += text;
-      }
-      updateLiveInterim(interim);
-    };
-    recognition.onerror = event => {
-      if (event.error !== 'no-speech' && event.error !== 'aborted') toast('语音识别提示：' + event.error, 'warning');
-    };
-    recognition.onend = () => { if (state.realRecording) { try { recognition.start(); } catch {} } };
-    recognition.start();
+    await startDoubaoAsr(stream);
     startMicMeter(stream);
 
     $('recordBtn').disabled = true;
@@ -518,11 +504,50 @@ async function startRealRecording() {
     $('speakerSwitchBtn').textContent = '说话人1 ▾';
     $('realRecLabel').textContent = '录音中 · 实时转写';
     $('realRecDot').style.opacity = '1';
-    $('transcriptStatus').textContent = state.aiEndpoint ? '大模型正在增量修正转写，并实时提炼议题与争议' : '本地智能正在修正转写；可选择或新增任意说话人';
+    $('transcriptStatus').textContent = '豆包 ASR 正在实时转写；大模型将同步提炼议题与争议';
     toast('麦克风已开启，请开始讲话', 'success');
   } catch (error) {
     toast(error?.name === 'NotAllowedError' ? '未获得麦克风权限，请在浏览器地址栏允许麦克风' : '无法启动录音：' + error.message, 'danger', 5000);
   }
+}
+
+function asrWebSocketUrl(endpoint) {
+  const url = new URL(endpoint);
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  url.pathname = url.pathname.replace(/\/$/, '') + '/asr-stream';
+  url.search = '';
+  return url.toString();
+}
+async function startDoubaoAsr(stream) {
+  const socket = new WebSocket(asrWebSocketUrl(state.aiEndpoint));
+  socket.binaryType = 'arraybuffer';
+  state.asrSocket = socket;
+  let readyResolve, readyReject;
+  const ready = new Promise((resolve, reject) => { readyResolve=resolve; readyReject=reject; });
+  socket.onmessage = event => {
+    const message = JSON.parse(event.data);
+    if (message.type === 'ready') { $('transcriptStatus').textContent='豆包 ASR 已连接，正在实时转写'; readyResolve(); return; }
+    if (message.type === 'partial') return updateLiveInterim(message.text);
+    if (message.type === 'final') return commitLiveTranscript(message.text, []);
+    if (message.type === 'error') { readyReject(new Error(message.message)); toast('豆包 ASR：' + message.message, 'danger', 5000); }
+  };
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('豆包 ASR 连接超时')), 10000);
+    socket.onopen = () => { clearTimeout(timer); socket.send(JSON.stringify({type:'start', glossary:state.aiGlossary.split(/\n|,|，/).map(x=>x.trim()).filter(Boolean)})); resolve(); };
+    socket.onerror = () => { clearTimeout(timer); reject(new Error('无法连接豆包 ASR Worker')); };
+  });
+  await Promise.race([ready, new Promise((_, reject) => setTimeout(() => reject(new Error('豆包 ASR 就绪超时')), 10000))]);
+  const context = new (window.AudioContext || window.webkitAudioContext)({sampleRate:16000});
+  const source = context.createMediaStreamSource(stream), processor = context.createScriptProcessor(4096, 1, 1), silence = context.createGain();
+  silence.gain.value = 0;
+  processor.onaudioprocess = event => {
+    if (socket.readyState !== WebSocket.OPEN) return;
+    const input = event.inputBuffer.getChannelData(0), pcm = new Int16Array(input.length);
+    for (let i=0;i<input.length;i++) pcm[i] = Math.max(-1, Math.min(1, input[i])) * 0x7fff;
+    socket.send(pcm.buffer);
+  };
+  source.connect(processor); processor.connect(silence); silence.connect(context.destination);
+  state.asrAudioContext=context; state.asrSource=source; state.asrProcessor=processor; state.asrSilence=silence;
 }
 
 function commitLiveTranscript(rawText,asrAlternatives=[]) {
@@ -642,11 +667,11 @@ function updateAIEnhanceBadge() {
 function showAIConfigModal() {
   openModal('连接大模型', `
     <div class="form-group"><label class="form-label">模型服务</label><select class="form-input" id="aiProviderInput" onchange="applyProviderPreset()"><option value="deepseek">DeepSeek</option><option value="doubao">豆包 / 火山方舟</option><option value="compatible">其他兼容服务</option></select></div>
-    <div class="form-group"><label class="form-label">安全代理服务地址</label><input class="form-input" id="aiEndpointInput" placeholder="例如：https://your-domain.com/api/meeting-ai"></div>
+    <div class="form-group"><label class="form-label">安全代理服务地址</label><input class="form-input" id="aiEndpointInput" placeholder="例如：https://your-worker.workers.dev"></div>
     <div class="form-group"><label class="form-label">模型名称</label><input class="form-input" id="aiModelInput" placeholder="DeepSeek 模型名或豆包推理接入点 ID"></div>
     <div class="form-group"><label class="form-label">会议术语词表</label><textarea class="form-input" id="aiGlossaryInput" rows="3" placeholder="每行一个，例如：\nV2.3\nTeambition\n张晓明\nRAG 检索增强生成"></textarea><div style="font-size:11px;color:var(--text-3);margin-top:5px">建议填写参会人姓名、产品名、项目代号、英文缩写和专业术语。</div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div style="padding:9px;background:var(--success-light);border-radius:7px;color:#237804">✓ 实时 ASR 润色</div><div style="padding:9px;background:var(--success-light);border-radius:7px;color:#237804">✓ 会后结构化纪要</div></div>
-    <div style="padding:10px 12px;background:var(--primary-bg);border-radius:7px;color:var(--text-2);font-size:12px;line-height:1.75">同一代理地址接收 <code>asr_polish</code> 和 <code>minutes_generate</code> 两种任务。DeepSeek/豆包密钥必须保存在代理服务端，不能写进公开 HTML。留空时使用本地分析。</div>
+    <div style="padding:10px 12px;background:var(--primary-bg);border-radius:7px;color:var(--text-2);font-size:12px;line-height:1.75">该地址同时用于豆包实时 ASR（<code>/asr-stream</code>）及可选的纪要大模型任务。所有密钥必须保存在代理服务端，不能写进公开 HTML。</div>
   `, `<button class="modal-btn" onclick="closeModal()">取消</button><button class="modal-btn primary" onclick="saveAIConfig()">保存配置</button>`);
   setTimeout(()=>{$('aiProviderInput').value=state.aiProvider;$('aiEndpointInput').value=state.aiEndpoint;$('aiModelInput').value=state.aiModel;$('aiGlossaryInput').value=state.aiGlossary},0);
 }
@@ -663,7 +688,6 @@ function saveAIConfig() {
   const model=$('aiModelInput')?.value.trim()||'';
   const glossary=$('aiGlossaryInput')?.value.trim()||'';
   if(endpoint && !/^https?:\/\//.test(endpoint)){toast('请输入以 http:// 或 https:// 开头的服务地址','warning');return;}
-  if(endpoint&&!model){toast('请填写模型名称或豆包推理接入点 ID','warning');return;}
   state.aiEndpoint=endpoint;
   state.aiProvider=provider;state.aiModel=model;state.aiGlossary=glossary;
   try{if(endpoint){localStorage.setItem('meetingAiEndpoint',endpoint);localStorage.setItem('meetingAiProvider',provider);localStorage.setItem('meetingAiModel',model);localStorage.setItem('meetingAiGlossary',glossary)}else{localStorage.removeItem('meetingAiEndpoint')}}catch{}
@@ -835,10 +859,13 @@ async function stopRealRecording() {
   state.realRecording = false;
   removeLiveInterim();
   try { state.recognition?.stop(); } catch {}
+  try { if(state.asrSocket?.readyState===WebSocket.OPEN) state.asrSocket.send(JSON.stringify({type:'end'})); } catch {}
+  try { state.asrSource?.disconnect(); state.asrProcessor?.disconnect(); state.asrSilence?.disconnect(); } catch {}
   try { if (state.mediaRecorder?.state !== 'inactive') state.mediaRecorder?.stop(); } catch {}
   state.mediaStream?.getTracks().forEach(t => t.stop());
   if (state.micFrame) cancelAnimationFrame(state.micFrame);
   state.audioContext?.close?.();
+  setTimeout(()=>{ try { state.asrSocket?.close(); state.asrAudioContext?.close?.(); } catch {} }, 1800);
   stopTimer();
   $('recordBtn').classList.remove('recording');
   $('recordBtn').textContent = '● 开始录音';

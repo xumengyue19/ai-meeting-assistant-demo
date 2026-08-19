@@ -1,0 +1,7 @@
+AI 实时会议助手产品需求文档.docx
+
+# PowerPoint build and QA artifacts
+.ppt-build*/
+qa/
+~$*.pptx
+*.pptx.inspect.ndjson
