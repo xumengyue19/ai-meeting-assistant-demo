@@ -305,6 +305,7 @@ let state = {
   asrProcessor: null,
   asrSource: null,
   asrSilence: null,
+  asrSpeakerMap: {},
   audioChunks: [],
   recordedAudioUrl: '',
   generatedScene: null,
@@ -369,6 +370,7 @@ function initScene(sceneKey) {
   state.lastSpeechAt = 0;
   state.lastAutoSpeakerAt = 0;
   state.aiJobs = [];
+  state.asrSpeakerMap = {};
   state.sourceActiveIndex = -1;
   state.audioChunks = [];
   state.generatedScene = null;
@@ -477,6 +479,7 @@ async function startRealRecording() {
     state.liveSpeakerCount = 1;
     state.lastSpeechAt = 0;
     state.lastAutoSpeakerAt = 0;
+    state.asrSpeakerMap = {};
     renderAllTranscripts();
     startTimer();
 
@@ -528,7 +531,7 @@ async function startDoubaoAsr(stream) {
     const message = JSON.parse(event.data);
     if (message.type === 'ready') { $('transcriptStatus').textContent='豆包 ASR 已连接，正在实时转写'; readyResolve(); return; }
     if (message.type === 'partial') return updateLiveInterim(message.text);
-    if (message.type === 'final') return commitLiveTranscript(message.text, []);
+    if (message.type === 'final') return commitDoubaoUtterances(message.utterances, message.text);
     if (message.type === 'error') { readyReject(new Error(message.message)); toast('豆包 ASR：' + message.message, 'danger', 5000); }
   };
   await new Promise((resolve, reject) => {
@@ -550,11 +553,24 @@ async function startDoubaoAsr(stream) {
   state.asrAudioContext=context; state.asrSource=source; state.asrProcessor=processor; state.asrSilence=silence;
 }
 
-function commitLiveTranscript(rawText,asrAlternatives=[]) {
+function commitDoubaoUtterances(utterances=[], fallbackText='') {
+  const finalized = Array.isArray(utterances) ? utterances.filter(item=>item?.text) : [];
+  if (!finalized.length) { if(fallbackText) commitLiveTranscript(fallbackText, []); return; }
+  finalized.forEach(item => {
+    const sourceId = String(item.additions?.speaker_id ?? item.additions?.speaker ?? item.speaker_id ?? item.speaker ?? 'unknown');
+    if (!state.asrSpeakerMap[sourceId]) state.asrSpeakerMap[sourceId] = Object.keys(state.asrSpeakerMap).length + 1;
+    commitLiveTranscript(item.text, [], state.asrSpeakerMap[sourceId]);
+  });
+}
+
+function commitLiveTranscript(rawText,asrAlternatives=[],speakerNo=null) {
   if (!rawText) return;
   const now = Date.now();
   // 浏览器无法可靠识别声纹；长停顿仅作为“新话轮”提示，用户可随时手动选择正确说话人。
-  if (state.lastSpeechAt && now - state.lastSpeechAt > 6500 && now - state.lastAutoSpeakerAt > 8000) {
+  if (speakerNo !== null) {
+    state.activeSpeakerNo = speakerNo;
+    state.liveSpeakerCount = Math.max(state.liveSpeakerCount, speakerNo);
+  } else if (state.lastSpeechAt && now - state.lastSpeechAt > 6500 && now - state.lastAutoSpeakerAt > 8000) {
     state.liveSpeakerCount++;
     state.activeSpeakerNo = state.liveSpeakerCount;
     state.lastAutoSpeakerAt = now;
