@@ -284,8 +284,6 @@ let state = {
   realRecordingSession: false,
   activeSpeakerNo: 1,
   liveSpeakerCount: 1,
-  lastSpeechAt: 0,
-  lastAutoSpeakerAt: 0,
   aiEndpoint: (()=>{try{return localStorage.getItem('meetingAiEndpoint')||''}catch{return ''}})(),
   aiProvider: (()=>{try{return localStorage.getItem('meetingAiProvider')||'asr'}catch{return 'asr'}})(),
   aiModel: (()=>{try{return localStorage.getItem('meetingAiModel')||''}catch{return ''}})(),
@@ -369,8 +367,6 @@ function initScene(sceneKey) {
   state.realRecordingSession = false;
   state.activeSpeakerNo = 1;
   state.liveSpeakerCount = 1;
-  state.lastSpeechAt = 0;
-  state.lastAutoSpeakerAt = 0;
   state.aiJobs = [];
   state.asrSpeakerMap = {};
   state.sourceActiveIndex = -1;
@@ -479,8 +475,6 @@ async function startRealRecording() {
     state.resolvedDisputes = [];
     state.activeSpeakerNo = 1;
     state.liveSpeakerCount = 1;
-    state.lastSpeechAt = 0;
-    state.lastAutoSpeakerAt = 0;
     state.asrSpeakerMap = {};
     renderAllTranscripts();
     startTimer();
@@ -509,7 +503,7 @@ async function startRealRecording() {
     $('speakerSwitchBtn').textContent = '说话人1 ▾';
     $('realRecLabel').textContent = '录音中 · 实时转写';
     $('realRecDot').style.opacity = '1';
-    $('transcriptStatus').textContent = '豆包 ASR 正在实时转写；大模型将同步提炼议题与争议';
+    $('transcriptStatus').textContent = '豆包 ASR 正在实时转写并分离说话人';
     toast('麦克风已开启，请开始讲话', 'success');
   } catch (error) {
     toast(error?.name === 'NotAllowedError' ? '未获得麦克风权限，请在浏览器地址栏允许麦克风' : '无法启动录音：' + error.message, 'danger', 5000);
@@ -531,7 +525,7 @@ async function startDoubaoAsr(stream) {
   const ready = new Promise((resolve, reject) => { readyResolve=resolve; readyReject=reject; });
   socket.onmessage = event => {
     const message = JSON.parse(event.data);
-    if (message.type === 'ready') { $('transcriptStatus').textContent='豆包 ASR 已连接，正在实时转写'; readyResolve(); return; }
+    if (message.type === 'ready') { $('transcriptStatus').textContent='豆包 ASR 已连接，说话人分离已开启'; readyResolve(); return; }
     if (message.type === 'partial') return updateLiveInterim(message.text);
     if (message.type === 'final') return commitDoubaoUtterances(message.utterances, message.text);
     if (message.type === 'error') { readyReject(new Error(message.message)); toast('豆包 ASR：' + message.message, 'danger', 5000); }
@@ -567,18 +561,11 @@ function commitDoubaoUtterances(utterances=[], fallbackText='') {
 
 function commitLiveTranscript(rawText,asrAlternatives=[],speakerNo=null) {
   if (!rawText) return;
-  const now = Date.now();
-  // 浏览器无法可靠识别声纹；长停顿仅作为“新话轮”提示，用户可随时手动选择正确说话人。
+  // 优先使用豆包 utterances.additions 返回的 speaker ID；无 ID 时保持当前手动选择，不再按停顿时长猜测。
   if (speakerNo !== null) {
     state.activeSpeakerNo = speakerNo;
     state.liveSpeakerCount = Math.max(state.liveSpeakerCount, speakerNo);
-  } else if (state.lastSpeechAt && now - state.lastSpeechAt > 2000) {
-    const speakerTotal=Math.max(2,state.liveSpeakerCount);
-    state.activeSpeakerNo = state.activeSpeakerNo % speakerTotal + 1;
-    state.lastAutoSpeakerAt = now;
-    toast(`间隔超过 2 秒，已切换至说话人${state.activeSpeakerNo}`, 'info', 1800);
   }
-  state.lastSpeechAt = now;
   const text = correctTranscriptLocally(rawText);
   const topic = inferLiveTopic(text);
   const analysis = inferLiveDispute(text, topic);
@@ -655,11 +642,10 @@ function removeLiveInterim() { $('liveInterim')?.remove(); }
 function showLiveSpeakerSelector() {
   if (!state.realRecording) return;
   const choices=Array.from({length:state.liveSpeakerCount},(_,i)=>`<button class="speaker-choice ${state.activeSpeakerNo===i+1?'active':''}" onclick="selectLiveSpeaker(${i+1})">说话人${i+1}</button>`).join('');
-  openModal('选择当前说话人', `<div class="form-group"><div class="form-label">已识别说话人</div><div class="speaker-choice-grid">${choices}<button class="speaker-choice" onclick="addLiveSpeaker()">＋ 新说话人</button></div></div><div style="color:var(--text-3);font-size:12px;line-height:1.7">切换只影响下一段转写；可持续新增说话人，不限制为两人。</div>`, `<button class="modal-btn" onclick="closeModal()">关闭</button>`);
+  openModal('选择当前说话人', `<div class="form-group"><div class="form-label">已识别说话人</div><div class="speaker-choice-grid">${choices}<button class="speaker-choice" onclick="addLiveSpeaker()">＋ 新说话人</button></div></div><div style="color:var(--text-3);font-size:12px;line-height:1.7">豆包 ASR 会自动分离说话人；手动选择仅在豆包未返回 speaker ID 时作为兜底。</div>`, `<button class="modal-btn" onclick="closeModal()">关闭</button>`);
 }
 function selectLiveSpeaker(no) {
   state.activeSpeakerNo=no;
-  state.lastSpeechAt=Date.now();
   $('speakerSwitchBtn').textContent=`说话人${no} ▾`;
   closeModal();
   toast(`已切换为说话人${no}`,'info',1600);
